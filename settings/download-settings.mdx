@@ -1,0 +1,122 @@
+---
+title: "Download settings: storage, auto-download, and network"
+description: "Configure where AntennaPod stores episodes, set auto-download rules, restrict to Wi-Fi, set the episode cache limit, and enable auto-delete after listening."
+---
+
+AntennaPod's download settings control when and how episodes are fetched, how many are kept on device, and what happens to them after you listen. Open them via **Settings → Downloads**.
+
+## Storage location
+
+Tap **Choose data folder** to select where AntennaPod stores downloaded episode files. The current path is shown as the summary beneath the preference. AntennaPod falls back to the default external files directory if the selected folder is unavailable or not writable, and to internal storage if external storage is not accessible.
+
+<Warning>
+  Changing the data folder does not move existing downloads to the new location. Episodes downloaded before the change remain in the original folder until deleted.
+</Warning>
+
+## Automation
+
+<AccordionGroup>
+  <Accordion title="Refresh feeds every">
+    Sets how often AntennaPod checks all subscribed feeds for new episodes in the background. Options range from every 15 minutes to once every 72 hours. Set to **Disabled** to turn off automatic refresh entirely and refresh feeds only manually. The default is every 12 hours.
+  </Accordion>
+
+  <Accordion title="On new episodes">
+    Decides what AntennaPod does when a new episode is found during a feed refresh. Options are:
+
+    - **Add to inbox** — episodes appear in the Inbox for you to review (default)
+    - **Add to queue** — episodes are added to the playback queue immediately
+    - **Do nothing** — episodes are only visible in the feed, no automatic placement
+
+    This is a global default. Individual feeds can override it in their own feed settings.
+  </Accordion>
+
+  <Accordion title="Automatic download">
+    Opens the **Automatic download** sub-screen where you can configure whether AntennaPod downloads new episodes without prompting. See [Automatic download settings](#automatic-download-settings) below.
+  </Accordion>
+
+  <Accordion title="Automatic deletion">
+    Opens the **Automatic deletion** sub-screen where you can configure whether played episodes are deleted automatically. See [Automatic deletion settings](#automatic-deletion-settings) below.
+  </Accordion>
+
+  <Accordion title="Delete removes from queue">
+    When enabled, deleting an episode's file also removes it from the playback queue. Disabled by default.
+  </Accordion>
+</AccordionGroup>
+
+## Network
+
+<AccordionGroup>
+  <Accordion title="Allow mobile data for">
+    A multi-select list that controls which operations AntennaPod is permitted to perform over a mobile (cellular) data connection. Each item can be toggled independently:
+
+    - **Images** — load podcast and episode artwork (allowed by default)
+    - **Feed refresh** — check feeds for new episodes
+    - **Episode download** — download episodes manually
+    - **Auto-download** — download episodes automatically in the background
+    - **Streaming** — stream episodes without downloading them first
+    - **Sync** — synchronize with a podcast sync service
+
+    Operations not checked here are restricted to Wi-Fi only.
+  </Accordion>
+
+  <Accordion title="Proxy">
+    Tap **Proxy** to configure an HTTP or SOCKS proxy for all AntennaPod network traffic. Enter the proxy type, host, port, and optional credentials. Leave the type set to **None** (the default) to connect directly.
+  </Accordion>
+</AccordionGroup>
+
+## Automatic download settings
+
+These settings appear in **Settings → Downloads → Automatic download**.
+
+<AccordionGroup>
+  <Accordion title="Enable automatic download">
+    Master switch for the auto-download feature. When off, AntennaPod never downloads episodes in the background. Disabled by default.
+
+    Individual feeds also have their own auto-download toggle in **Feed settings**. Both the global switch and the per-feed switch must be on for a feed's episodes to be auto-downloaded.
+  </Accordion>
+
+  <Accordion title="Download only from queue">
+    When enabled, AntennaPod only auto-downloads episodes that are already in the playback queue. Disabled by default.
+  </Accordion>
+
+  <Accordion title="Episode cache size">
+    Sets the maximum number of downloaded episodes AntennaPod keeps on device at one time. When this limit is reached, the oldest played episodes are removed to make room for new downloads. Options range from 5 to 50 episodes, plus **Unlimited**. The default is 25.
+  </Accordion>
+
+  <Accordion title="Download on battery">
+    When enabled, auto-downloads proceed even when the device is running on battery. Enabled by default. Disable it to restrict auto-downloads to when the device is charging.
+  </Accordion>
+</AccordionGroup>
+
+## Automatic deletion settings
+
+These settings appear in **Settings → Downloads → Automatic deletion**.
+
+<AccordionGroup>
+  <Accordion title="Delete episodes after playing">
+    When enabled, AntennaPod deletes an episode's downloaded file automatically once you finish listening. Disabled by default.
+  </Accordion>
+
+  <Accordion title="Delete local episodes (device-created)">
+    When enabled, episodes recorded or created locally on the device are also subject to automatic deletion. AntennaPod shows a confirmation dialog the first time you enable this option. Only available when **Delete episodes after playing** is also on.
+  </Accordion>
+
+  <Accordion title="Favorite episodes are not deleted">
+    When enabled, episodes marked as favorites are excluded from automatic deletion even if **Delete episodes after playing** is on. Enabled by default when auto-delete is active.
+  </Accordion>
+
+  <Accordion title="Episode cleanup">
+    Sets a time-based policy for removing old downloaded episodes regardless of whether they have been played. Options include:
+
+    - **Never** — no time-based cleanup (default)
+    - **After listening** — delete immediately when playback completes
+    - **N hours after listening** — delete a set number of hours after the episode was finished
+    - **N days after listening** — delete a set number of days after the episode was finished
+    - **Except favorites** — never clean up favorited episodes
+    - **Except queued** — never clean up episodes still in the queue
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  The episode cache size limit and the episode cleanup policy work together. AntennaPod enforces whichever constraint is more restrictive for a given episode.
+</Note>

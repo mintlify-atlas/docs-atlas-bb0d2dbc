@@ -1,0 +1,119 @@
+---
+title: "Episode queue and inbox: organize your podcast listening"
+description: "Use the AntennaPod queue to line up episodes back-to-back, manage the inbox for new arrivals, drag to reorder, and automate what gets queued."
+---
+
+AntennaPod separates the job of surfacing new episodes (the **Inbox**) from the job of deciding what plays next (the **Queue**). Understanding both helps you build a listening workflow that fits how you consume podcasts.
+
+## The episode queue
+
+The queue is an ordered list of episodes that play back-to-back. When one episode finishes, the next one in the queue starts automatically. Think of it as a playlist you control.
+
+Open the **Queue** screen from the bottom navigation bar or the side drawer.
+
+### Adding episodes to the queue
+
+You can add episodes to the queue from any episode list — the feed view, the inbox, the all-episodes screen, or the downloads screen.
+
+<Tabs>
+  <Tab title="Single episode">
+    Long-press an episode to open the context menu, then choose **Add to queue**. The episode is appended to the end of the queue.
+
+    Alternatively, swipe left or right on an episode (depending on your swipe action settings) to enqueue it immediately.
+  </Tab>
+  <Tab title="Multiple episodes">
+    Tap and hold an episode to enter multi-select mode, then tap additional episodes to select them. Use the floating action menu at the bottom to **Add to queue**.
+  </Tab>
+</Tabs>
+
+### Removing episodes from the queue
+
+- Long-press an episode in the queue and select **Remove from queue**.
+- Swipe the episode left or right (depending on your configured swipe action) to remove it.
+- Tap **⋮** → **Clear queue** to remove all episodes at once. A confirmation dialog appears before the queue is cleared.
+
+<Warning>
+  Clearing the queue only removes episodes from the queue. It does not delete downloaded files.
+</Warning>
+
+### Drag-to-reorder
+
+You can drag episodes to any position in the queue.
+
+<Steps>
+  <Step title="Unlock the queue">
+    If the queue is locked (the lock icon in the toolbar is active), tap **⋮** → **Lock queue** to toggle it off. Locking prevents accidental reordering.
+  </Step>
+  <Step title="Drag an episode">
+    Touch and hold the drag handle on the right side of any episode row, then drag it up or down to the desired position.
+  </Step>
+  <Step title="Move to top or bottom">
+    Long-press an episode and choose **Move to top** or **Move to bottom** from the context menu as a quick alternative to dragging.
+  </Step>
+</Steps>
+
+### Queue sorting
+
+You can apply a sort order to the entire queue from **⋮** → **Sort queue**. Available sort orders include:
+
+- Date added (oldest or newest first)
+- Episode duration (shortest or longest first)
+- Feed name (A–Z or Z–A)
+- Random shuffle
+
+<Note>
+  When **Keep sorted** is enabled in queue settings, the queue is automatically re-sorted when new episodes are added, and the drag-to-reorder handle is hidden. The queue lock option is also hidden while Keep sorted is active.
+</Note>
+
+### Queue lock
+
+Enable **⋮** → **Lock queue** to prevent any reordering of episodes. The lock is useful when you want to listen in a fixed order without accidental swipes or drags changing the sequence. A confirmation dialog warns you the first time you enable the lock.
+
+## The inbox
+
+The inbox is a filtered view that shows only **new** episodes — episodes that have arrived since your last feed refresh and have not yet been marked as played or deliberately dismissed.
+
+Open **Inbox** from the bottom navigation bar or the side drawer.
+
+### How episodes arrive in the inbox
+
+Each feed's **New episode action** setting controls whether new episodes go to the inbox, are added directly to the queue, or are ignored.
+
+| Setting | Behavior |
+|---------|----------|
+| **Use global default** | Inherits the app-wide new episodes setting |
+| **Add to inbox** | New episodes appear in the inbox |
+| **Add to queue** | New episodes skip the inbox and go directly to the queue |
+| **Do nothing** | New episodes are fetched but not surfaced automatically |
+
+Configure this per feed under **Feed settings → New episode action**, or globally under **Settings → Inbox**.
+
+### Working with inbox episodes
+
+- **Swipe** an episode to mark it as played and remove it from the inbox.
+- **Long-press** to access the full context menu (add to queue, download, mark as played, etc.).
+- Tap **⋮** → **Remove all from inbox** to clear every episode from the inbox at once.
+
+### Sorting the inbox
+
+Tap **⋮** → **Sort** to choose the inbox sort order. The inbox supports sorting by:
+
+- Date (oldest or newest first)
+- Duration (shortest or longest first)
+
+## Auto-queue behavior
+
+AntennaPod can add episodes to the queue automatically when certain conditions are met.
+
+<CardGroup cols={2}>
+  <Card title="New episode action: add to queue" icon="list-plus">
+    Set a feed's **New episode action** to **Add to queue**. Every time the feed refreshes and new episodes are found, they are appended to the queue without appearing in the inbox first.
+  </Card>
+  <Card title="Global default" icon="sliders">
+    Set a global default under **Settings → Inbox → New episode default action** so all feeds behave consistently unless individually overridden.
+  </Card>
+</CardGroup>
+
+<Tip>
+  If you want a "fire and forget" setup where episodes queue up automatically as soon as they publish, set **New episode action** to **Add to queue** and enable **Auto-download** on the feeds you care about most. New episodes will be downloaded and queued ready to play.
+</Tip>

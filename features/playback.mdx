@@ -1,0 +1,124 @@
+---
+title: "Audio playback controls and player features in AntennaPod"
+description: "Play, pause, seek, and skip episodes in AntennaPod. Use variable speed, sleep timer, chapters, transcripts, and Chromecast from the audio player."
+---
+
+AntennaPod's audio player gives you precise control over every aspect of your listening experience — from fine-grained seeking to casting audio to your TV. Open the player by tapping the mini-player bar at the bottom of any screen or by tapping an episode and selecting **Play**.
+
+## Player controls
+
+The player bar shows the core transport controls. These are available both in the full player and from the lock screen or notification shade.
+
+<CardGroup cols={2}>
+  <Card title="Play / Pause" icon="circle-play">
+    Tap the play button to start or resume playback. Tap again to pause. The button state updates in real time.
+  </Card>
+  <Card title="Rewind" icon="backward">
+    Jump back by the configured number of seconds (default: 10 s). Long-press the button to change the rewind duration.
+  </Card>
+  <Card title="Fast-forward" icon="forward">
+    Skip ahead by the configured number of seconds (default: 30 s). Long-press to adjust the fast-forward duration.
+  </Card>
+  <Card title="Skip to next" icon="forward-step">
+    Jump to the next episode in the queue. Playback continues automatically.
+  </Card>
+</CardGroup>
+
+### Seeking
+
+Drag the progress bar below the playback controls to seek to any position. A floating label shows the current timestamp or chapter title as you drag. Release to confirm the seek.
+
+Tap the elapsed-time label to toggle between **elapsed time** and **time remaining**.
+
+## Variable playback speed
+
+Tap the speed button (showing the current speed such as `1.00`) to open the speed picker. You can choose any speed between 0.5× and 3.0×.
+
+<Tip>
+  Each podcast feed can have its own default speed. Go to the feed's settings and set **Playback speed** to override the global default for that show.
+</Tip>
+
+Speed changes take effect immediately and the position display automatically converts elapsed and remaining time to match the adjusted speed.
+
+## Sleep timer
+
+The sleep timer stops playback after a set interval so you can fall asleep without missing anything.
+
+<Steps>
+  <Step title="Open the sleep timer">
+    In the full player, tap the **⋮** overflow menu and select **Set sleep timer**.
+  </Step>
+  <Step title="Choose a duration">
+    Pick a duration from the preset list or enter a custom number of minutes.
+  </Step>
+  <Step title="Cancel or extend">
+    When the timer is active, the overflow menu shows **Disable sleep timer**. Tap it to cancel before time runs out.
+  </Step>
+</Steps>
+
+## Chapter navigation
+
+Episodes that include embedded chapter markers — from both Podcasting 2.0 feeds and ID3 tags in MP3 files — display chapter dividers on the seek bar.
+
+- Chapter boundaries appear as tick marks along the progress bar.
+- Drag slowly through the seek bar to snap to individual chapter starts.
+- The floating seek label shows the chapter title when you are within a chapter.
+
+<Note>
+  Chapters are loaded asynchronously. If chapter marks do not appear immediately, wait a moment for the metadata to finish loading.
+</Note>
+
+## Episode transcripts
+
+If a podcast includes a transcript, the **Transcript** option appears in the player overflow menu.
+
+<Steps>
+  <Step title="Open the transcript">
+    Tap **⋮** → **Transcript** in the audio player toolbar.
+  </Step>
+  <Step title="Follow along">
+    The transcript dialog displays the full text of the episode. Scroll manually to read ahead or behind the current position.
+  </Step>
+</Steps>
+
+Transcript support is handled by the `:parser:transcript` module and rendered through the `:ui:transcript` module.
+
+## Lock screen and notification controls
+
+AntennaPod registers a media session so you can control playback without unlocking your phone.
+
+<CardGroup cols={2}>
+  <Card title="Notification" icon="bell">
+    The persistent notification shows play/pause, rewind, and fast-forward buttons. Dismiss the notification to stop the player service.
+  </Card>
+  <Card title="Lock screen" icon="lock">
+    Album art, episode title, and transport controls appear on the lock screen on Android devices that support media session display.
+  </Card>
+</CardGroup>
+
+Bluetooth headset buttons and Android Auto media controls are also routed through the same media session.
+
+## Chromecast support
+
+<Warning>
+  Chromecast is only available in the **Google Play** build of AntennaPod. The F-Droid build does not include the Cast SDK because it is a proprietary dependency.
+</Warning>
+
+When you are connected to a Chromecast device on the same Wi-Fi network, a cast button appears in the player toolbar.
+
+<Steps>
+  <Step title="Ensure you are on the same network">
+    Your phone and the Chromecast must be on the same Wi-Fi network.
+  </Step>
+  <Step title="Tap the cast button">
+    The cast button appears in the toolbar of the audio player. Tap it to open the device picker.
+  </Step>
+  <Step title="Select your device">
+    Choose your Chromecast from the list. Playback transfers to the device and the player UI switches to cast mode.
+  </Step>
+  <Step title="Control from your phone">
+    All transport controls — play, pause, seek, speed — work while casting. Tap the cast button again to stop casting and return audio to your phone.
+  </Step>
+</Steps>
+
+Chromecast playback is implemented in the `:playback:cast` module, which implements `PlaybackServiceMediaPlayer` using the Cast SDK and is compiled only in the `play` build flavor.

@@ -1,126 +1,93 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "AntennaPod",
+  "theme": "almond",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#238ae7",
+    "light": "#83cfee",
+    "dark": "#041c34"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://media.brand.dev/25f3e32d-f03e-4d0a-85a5-96008c71b7a7.jpg",
+  "logo": {
+    "light": "https://media.brand.dev/ffea3050-9db2-49db-9632-a7b3ab9e7062.svg",
+    "dark": "https://media.brand.dev/ffea3050-9db2-49db-9632-a7b3ab9e7062.svg"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/AntennaPod/AntennaPod"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/AntennaPod/AntennaPod"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "User Guide",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "introduction",
+              "getting-started/installation",
+              "getting-started/adding-podcasts"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Features",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "features/playback",
+              "features/subscriptions",
+              "features/downloads",
+              "features/queue-and-inbox"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Settings & Customization",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/components",
-              "essentials/reusable-snippets"
+              "settings/playback-settings",
+              "settings/download-settings",
+              "settings/user-interface",
+              "settings/notifications"
             ]
           },
           {
-            "group": "Agent ready",
+            "group": "Data & Sync",
             "pages": [
-              "agent-ready/prompt",
-              "agent-ready/visibility",
-              "agent-ready/contextual",
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "data/import-export",
+              "data/synchronization",
+              "data/statistics"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Contributing",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Contributing",
             "pages": [
-              "api-reference/introduction"
+              "contributing/overview",
+              "contributing/building",
+              "contributing/architecture",
+              "contributing/testing",
+              "contributing/translations"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Modules",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "modules/app-structure",
+              "modules/playback",
+              "modules/networking",
+              "modules/storage"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

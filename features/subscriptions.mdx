@@ -1,0 +1,134 @@
+---
+title: "Managing podcast subscriptions, feeds, and per-feed settings"
+description: "Subscribe to podcasts, configure per-feed settings for auto-download and playback speed, refresh feeds manually or automatically, and filter your library."
+---
+
+AntennaPod stores every podcast you follow as a feed subscription. Each feed has its own set of preferences that let you tune download behavior, playback speed, episode retention, and more — independently of the global defaults in **Settings**.
+
+## Adding a subscription
+
+Open the **+** button from the main screen or the subscriptions list. You can search by podcast name, browse featured directories, or paste a feed URL directly. Once you subscribe, AntennaPod fetches the feed and adds all available episodes to the database.
+
+<Note>
+  Password-protected feeds are supported. Enter credentials in the feed's **Settings** → **Authentication** section.
+</Note>
+
+## Viewing your subscriptions
+
+Tap **Subscriptions** in the bottom navigation or the side drawer. Each row shows the podcast artwork, name, and a count of new episodes. Tap a feed to open its episode list.
+
+From the episode list you can:
+
+- Browse all episodes from that feed.
+- Filter episodes by status (played, unplayed, downloaded, queued).
+- Sort episodes by date or duration.
+- Access the feed's individual settings.
+
+## Per-feed settings
+
+Each subscription has a dedicated settings screen. Open it by navigating to the feed, then tapping **⋮** → **Feed settings**.
+
+<AccordionGroup>
+  <Accordion title="Auto-download">
+    Controls whether new episodes are downloaded automatically when the feed refreshes.
+
+    | Option | Behavior |
+    |--------|----------|
+    | **Use global default** | Inherits the setting from **Settings → Downloads → Auto-download** |
+    | **Always download** | New episodes are downloaded regardless of the global setting |
+    | **Never download** | New episodes are never downloaded automatically for this feed |
+
+    This maps to the `AutoDownloadSetting` enum (`GLOBAL`, `ENABLED`, `DISABLED`) in `FeedPreferences`.
+  </Accordion>
+  <Accordion title="Keep updated">
+    When enabled (the default), this feed is included in scheduled automatic refreshes. Disable it to refresh the feed only when you explicitly request it. Useful for feeds that publish infrequently.
+  </Accordion>
+  <Accordion title="Playback speed">
+    Override the global playback speed for this feed. Set a specific speed (e.g., `1.5×`) or choose **Use global default** to inherit the app-wide speed. The special value `SPEED_USE_GLOBAL` (`-1`) indicates no per-feed override is set.
+  </Accordion>
+  <Accordion title="Skip intro / outro">
+    Automatically skip a fixed number of seconds at the start or end of every episode from this feed. Useful for feeds with consistent sponsor segments or long intros.
+  </Accordion>
+  <Accordion title="Skip silence">
+    Enable silence skipping for this feed independently of the global setting. Options are **Off**, **Use global default**, and **Aggressive**.
+  </Accordion>
+  <Accordion title="Volume adjustment">
+    Boost or reduce playback volume for this feed relative to others. Helpful when a feed is consistently too quiet or too loud.
+  </Accordion>
+  <Accordion title="Auto-delete">
+    Choose when episodes from this feed are deleted after playback.
+
+    | Option | Behavior |
+    |--------|----------|
+    | **Use global default** | Inherits the global auto-delete setting |
+    | **Always** | Episodes are deleted automatically after being played |
+    | **Never** | Episodes are never deleted automatically |
+  </Accordion>
+  <Accordion title="New episode action">
+    Controls what happens when new episodes arrive during a feed refresh.
+
+    | Option | Behavior |
+    |--------|----------|
+    | **Use global default** | Inherits the global new episodes action |
+    | **Add to inbox** | New episodes appear in the Inbox |
+    | **Add to queue** | New episodes are added directly to the queue |
+    | **Do nothing** | Episodes are fetched but not surfaced anywhere automatically |
+  </Accordion>
+  <Accordion title="Episode notifications">
+    When enabled, AntennaPod shows a notification each time a new episode is published to this feed.
+  </Accordion>
+  <Accordion title="Authentication">
+    Some feeds require a username and password. Enter credentials here to access private or premium feeds.
+  </Accordion>
+  <Accordion title="Tags">
+    Assign tags to group feeds in the subscriptions list. Tags appear as sections or filters in the subscription view.
+  </Accordion>
+</AccordionGroup>
+
+## Refreshing feeds
+
+AntennaPod checks for new episodes by refreshing the RSS/Atom feed from the server.
+
+<Tabs>
+  <Tab title="Manual refresh">
+    Pull down to refresh on the subscriptions list, the queue, or the downloads screen. You can also tap **⋮** → **Refresh** from any of those screens.
+
+    AntennaPod uses `FeedUpdateManager` to trigger a `FeedUpdateWorker` (via Android WorkManager) that fetches all feeds marked as **Keep updated**.
+  </Tab>
+  <Tab title="Automatic refresh">
+    Go to **Settings → Network → Refresh interval** to schedule automatic background refreshes. Options range from every 15 minutes to once a day, or you can disable automatic refresh entirely.
+
+    Feeds with **Keep updated** disabled are skipped during automatic refreshes.
+  </Tab>
+</Tabs>
+
+<Tip>
+  Swipe down on the subscriptions screen to trigger an immediate refresh of all feeds that have **Keep updated** enabled.
+</Tip>
+
+## Filtering and sorting the episode list
+
+Each feed's episode list has filter and sort controls available from the toolbar.
+
+**Filter options include:**
+
+- Played / unplayed
+- Downloaded / not downloaded
+- Queued / not queued
+- Has media / no media
+
+**Sort options include:**
+
+- Date (newest or oldest first)
+- Duration (shortest or longest first)
+- Episode title (A–Z or Z–A)
+
+Filters and sort orders are stored in `UserPreferences` and persist between sessions.
+
+## Removing a subscription
+
+To unsubscribe from a podcast, go to the feed's episode list, tap **⋮**, and select **Remove feed**. A confirmation dialog appears before any data is deleted. You can choose whether to also delete downloaded episode files.
+
+<Warning>
+  Removing a subscription permanently deletes the feed and all associated episode metadata from the database. Downloaded audio files are only removed if you confirm that option in the dialog.
+</Warning>

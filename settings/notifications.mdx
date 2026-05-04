@@ -1,0 +1,93 @@
+---
+title: "Notification settings: playback controls and error alerts"
+description: "Configure AntennaPod's notification channels, playback notification action buttons, download and sync error alerts, and per-feed new episode notifications."
+---
+
+AntennaPod uses Android's standard notification system to surface activity while you listen, download, and sync. Most notification behavior is managed through Android's system notification settings, but AntennaPod exposes a few controls of its own. Open them via **Settings → Notifications**.
+
+## How AntennaPod uses notifications
+
+AntennaPod registers the following notification channels. You can adjust their behavior — including sound, vibration, and whether they appear on the lock screen — from your device's **Settings → Apps → AntennaPod → Notifications** screen.
+
+| Channel | Purpose | Default importance |
+|---|---|---|
+| **Playback** | Media controls shown while an episode is playing | Low (no sound) |
+| **Downloading** | Progress indicator shown during active downloads | Low (no sound) |
+| **Refreshing** | Progress indicator shown while feeds are refreshing | Low (no sound) |
+| **User action required** | Alerts that require a response, such as login prompts | High |
+| **Download error** | Reports failed episode downloads | High |
+| **Sync error** | Reports failures from podcast sync services | High |
+| **New episodes** | Notifies you when a subscribed feed publishes a new episode | Default |
+
+## Error notifications
+
+These preferences appear under **Settings → Notifications** and control the two high-priority error channels.
+
+<AccordionGroup>
+  <Accordion title="Download error notifications">
+    When enabled (the default), AntennaPod posts a notification whenever an episode download fails. Tap the notification to open the Downloads screen and see which episodes encountered problems.
+
+    <Note>
+      On Android 8 and later, disabling this toggle during app setup migrates the setting to the system notification channel. After that, use your device's notification settings to enable or disable the channel.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Sync error notifications">
+    When enabled (the default), AntennaPod posts a notification when synchronization with a podcast sync service fails. This covers services like Gpodder.net. The notification includes details about the type of failure.
+
+    <Note>
+      Like download error notifications, this setting migrates to the system notification channel on Android 8 and later after the initial app setup.
+    </Note>
+  </Accordion>
+</AccordionGroup>
+
+## Playback notification
+
+The playback notification appears in the status bar and on the lock screen whenever an episode is playing or paused. It provides media controls so you can play, pause, skip, and seek without opening the app.
+
+<AccordionGroup>
+  <Accordion title="Persistent notification (Android 10 and earlier)">
+    When enabled (the default on Android 10 and below), the playback notification remains visible even when playback is paused. This keeps AntennaPod ready for quick resumption and prevents Android from killing the playback process in the background. On Android 11 and later, the system controls this behavior and the setting is hidden.
+  </Accordion>
+
+  <Accordion title="Expanded notification (Android 7 and earlier)">
+    On Android 7 and below, this setting requests that the system display the notification in its expanded form by default, which shows more controls. On Android 8 and later, notification channels handle expansion automatically and this toggle is hidden.
+  </Accordion>
+
+  <Accordion title="Notification action buttons">
+    Tap **Notification action buttons** to choose which two extra action buttons appear in the expanded playback notification alongside the standard play/pause, rewind, and fast-forward controls. Exactly two buttons must be selected. Available options are:
+
+    - **Skip** — skip to the next episode in the queue
+    - **Next chapter** — jump to the next chapter within the current episode
+    - **Playback speed** — toggle through your preset playback speeds
+    - **Sleep timer** — start or stop the sleep timer
+
+    The default selection is **Skip** and **Playback speed**.
+
+    <Note>
+      This preference is found under **Settings → User interface → Notification action buttons**, not the Notifications screen.
+    </Note>
+  </Accordion>
+</AccordionGroup>
+
+## New episode notifications
+
+AntennaPod can notify you when a feed you follow publishes a new episode. This feature uses the **New episodes** notification channel, which is in the **News** group.
+
+To enable new episode notifications for a specific podcast:
+
+<Steps>
+  <Step title="Open the feed">
+    Navigate to the podcast in **Subscriptions** and tap the feed to open it.
+  </Step>
+  <Step title="Open feed settings">
+    Tap the three-dot overflow menu in the top-right corner and select **Feed settings**.
+  </Step>
+  <Step title="Enable notifications">
+    Toggle **Send notifications for new episodes** on. AntennaPod will notify you each time this feed has a new episode detected during a feed refresh.
+  </Step>
+</Steps>
+
+<Tip>
+  New episode notifications depend on feed refresh running. If you have disabled automatic feed refresh, you will only receive these notifications when you refresh feeds manually.
+</Tip>

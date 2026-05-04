@@ -1,0 +1,89 @@
+---
+title: "Listening statistics, history, and yearly Echo rewind"
+description: "Track total listening time and per-podcast breakdowns in AntennaPod's statistics screens, and view your yearly highlights with the animated Echo rewind."
+---
+
+AntennaPod tracks how much time you spend listening and surfaces that data in several screens. The main statistics view gives you an ongoing picture of your listening habits broken down by podcast, year, and download usage. At the end of each year, the **Echo** rewind gives you an animated summary of your year in podcasting.
+
+## Viewing statistics
+
+Open statistics from the side navigation menu by tapping **Statistics**. The screen has three tabs.
+
+### Subscriptions tab
+
+The **Subscriptions** tab shows your listening time broken down by podcast. Each row displays the podcast artwork, title, and a bar representing how much time you have spent listening relative to your most-listened podcast.
+
+Tap any row to open the detailed statistics for that podcast.
+
+**What is shown per podcast:**
+
+| Stat | Description |
+|---|---|
+| Time played | Total playback time for this podcast |
+| Episodes started | Number of episodes you have started |
+| Episodes total | Total number of episodes in the feed |
+| Total duration | Combined duration of all episodes |
+| Episodes downloaded | Number of episodes you have downloaded |
+| Space used | Storage used by downloaded episodes |
+| Release schedule | AntennaPod's guess at how often new episodes are released |
+| Expected next episode | Estimated date of the next episode based on past release patterns |
+
+**Filtering statistics**
+
+Tap the filter icon in the toolbar to set a date range. You can limit statistics to a specific window (for example, episodes played this year) or toggle whether episodes that were only marked as played — without actually being listened to — are counted.
+
+### Years tab
+
+The **Years** tab displays a bar chart of your total listening time per month, grouped by year. This gives a long-term view of how your listening habits have changed over time.
+
+### Downloads tab
+
+The **Downloads** tab shows how much storage each podcast's downloaded episodes are using.
+
+## Resetting statistics
+
+To clear all accumulated statistics, tap the overflow menu in the statistics toolbar and select **Reset statistics**. A confirmation dialog appears before any data is deleted. This resets play-time counters but does not affect playback positions or played/unplayed status.
+
+## Echo: yearly rewind
+
+Echo is AntennaPod's yearly rewind — an animated, story-style summary of your listening year. It appears automatically in December once the feature becomes active for the current year. You can also open it manually from the statistics screen by tapping the overflow menu and selecting **Echo**.
+
+<Info>
+  Echo uses data from January 1 of the current year to the present. Statistics from previous years are not included in the Echo screens.
+</Info>
+
+### Echo screens
+
+Echo is presented as a sequence of full-screen slides that advance automatically. Tap the left or right side of the screen to go back or forward, or tap and hold to pause.
+
+<Steps>
+  <Step title="Intro">
+    A welcome screen that sets the theme for your year in review.
+  </Step>
+  <Step title="Hours played">
+    Your total listening time for the year in hours, alongside the number of different podcasts you listened to.
+  </Step>
+  <Step title="Queue">
+    How many hours of listening are currently waiting in your queue, with a note about what that means relative to the time left in the year.
+  </Step>
+  <Step title="Time release play">
+    A highlight of a podcast episode from the year.
+  </Step>
+  <Step title="Hoarder or listener?">
+    A percentage showing how many of your active subscriptions you actually listened to this year. AntennaPod classifies you as a hoarder, a moderate listener, or a completionist based on that score.
+  </Step>
+  <Step title="Thanks">
+    A thank-you screen acknowledging the open-source contributors behind AntennaPod.
+  </Step>
+  <Step title="Share">
+    A shareable summary card you can screenshot and send to others.
+  </Step>
+</Steps>
+
+### When Echo is available
+
+Echo becomes visible starting on December 10 of the release year. Outside that window, it is hidden from the statistics menu in release builds. In debug builds, Echo is always accessible.
+
+<Tip>
+  To share your Echo summary, navigate to the final **Share** screen and take a screenshot. There is no built-in share button on earlier screens.
+</Tip>

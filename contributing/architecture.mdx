@@ -1,0 +1,145 @@
+---
+title: "AntennaPod architecture: modules, services, and data flow"
+description: "Understand AntennaPod's modular Gradle layout, the service-interface pattern, EventBus communication, and how feeds are fetched, parsed, stored, and displayed."
+---
+
+AntennaPod is built as a highly modularized Android application. Rather than one large `:app` module, functionality is split into focused Gradle modules organized by domain. Each module lives in a folder matching its Gradle path (for example, `:net:discovery` is in `./net/discovery/`) and contains a `README.md` describing its purpose.
+
+## Module overview
+
+The modules fall into several domains:
+
+<AccordionGroup>
+  <Accordion title="Core modules">
+    | Module | Role |
+    |--------|------|
+    | `:app` | Main application module. Integrates all features and is the only module that depends on everything else. |
+    | `:event` | EventBus event classes used for cross-component communication throughout the app. |
+    | `:model` | Core data classes: `Feed`, `FeedItem`, `FeedMedia`, and `Chapter`. |
+    | `:system` | System integration utilities: crash reporting, package utilities, thread utilities. |
+  </Accordion>
+  <Accordion title="Networking modules">
+    | Module | Role |
+    |--------|------|
+    | `:net:common` | Shared network utilities including `AntennapodHttpClient` and `UserAgentInterceptor`. |
+    | `:net:discovery` | Podcast search and discovery APIs. |
+    | `:net:download:service-interface` | Interface for triggering downloads without depending on the implementation. |
+    | `:net:download:service` | Download implementation using WorkManager workers (`EpisodeDownloadWorker`, `FeedUpdateWorker`). |
+    | `:net:ssl` | SSL backports and security provider installations. |
+    | `:net:sync:gpoddernet` | Sync backend for the open-source Gpodder.net synchronization service. |
+    | `:net:sync:service-interface` | Interface for triggering sync. |
+    | `:net:sync:service` | Sync service implementation. |
+  </Accordion>
+  <Accordion title="Parser modules">
+    | Module | Role |
+    |--------|------|
+    | `:parser:feed` | XML feed parser. |
+    | `:parser:media` | Tag parser for media files including ID3 and Ogg/Vorbis. |
+    | `:parser:transcript` | Parser for episode transcripts. |
+  </Accordion>
+  <Accordion title="Playback modules">
+    | Module | Role |
+    |--------|------|
+    | `:playback:base` | Basic interfaces for `PlaybackServiceMediaPlayer`. |
+    | `:playback:cast` | Chromecast support; compiled only in the `play` build flavor. |
+    | `:playback:service` | Main service responsible for media playback. |
+  </Accordion>
+  <Accordion title="Storage modules">
+    | Module | Role |
+    |--------|------|
+    | `:storage:database` | Main SQLite database containing subscriptions and playback state. |
+    | `:storage:database-maintenance-service` | Periodic background tasks to clean up the database. |
+    | `:storage:importexport` | Import and export of the AntennaPod database. |
+    | `:storage:preferences` | User settings storage (not including the settings UI). |
+  </Accordion>
+  <Accordion title="UI modules">
+    | Module | Role |
+    |--------|------|
+    | `:ui:app-start-intent` | Classes to start main app activities from other modules without a direct UI dependency. |
+    | `:ui:chapters` | Chapter loading and merging logic. |
+    | `:ui:common` | Shared basic UI functionality. |
+    | `:ui:discovery` | Screens for discovering and searching podcasts. |
+    | `:ui:echo` | The yearly "Echo" rewind screen. |
+    | `:ui:episodes` | Common classes for displaying episode information. |
+    | `:ui:glide` | Glide image loading configuration and custom model loaders. |
+    | `:ui:i18n` | All translated strings and internationalization resources. |
+    | `:ui:notifications` | Notification channel IDs and icons. |
+    | `:ui:preferences` | Settings screen UI. |
+    | `:ui:statistics` | Statistics screens. |
+    | `:ui:transcript` | Utilities for displaying episode transcripts. |
+    | `:ui:widget` | Home screen widget. |
+  </Accordion>
+</AccordionGroup>
+
+## The service-interface / service split
+
+Several functional areas use a deliberate two-module pattern to prevent circular dependencies:
+
+- A **`service-interface`** module exposes an abstract interface (or a singleton holder). Consumer modules depend only on this thin interface module.
+- A **`service`** module contains the concrete implementation and depends on everything it needs to do the actual work.
+- The implementation is wired in at app startup, not at compile time.
+
+Examples of this pattern in the codebase:
+
+| Interface module | Implementation module |
+|------------------|-----------------------|
+| `:net:download:service-interface` | `:net:download:service` |
+| `:net:sync:service-interface` | `:net:sync:service` |
+
+### Startup wiring: `ClientConfigurator`
+
+`PodcastApp.onCreate()` calls `ClientConfigurator.initialize(context)` once at app startup. `ClientConfigurator` performs two kinds of work:
+
+1. **Initializes singletons** — database, preferences, network settings, SSL provider, notification channels.
+2. **Registers implementations** — calls `setImpl()` / `setInstance()` on each service-interface holder, replacing the abstract placeholder with the real implementation.
+
+```java
+// From ClientConfigurator.java
+DownloadServiceInterface.setImpl(new DownloadServiceInterfaceImpl());
+FeedUpdateManager.setInstance(new FeedUpdateManagerImpl());
+AutoDownloadManager.setInstance(new AutoDownloadManagerImpl());
+SynchronizationQueue.setInstance(new SynchronizationQueueImpl(context));
+```
+
+This means any module that needs to trigger a download or sync only imports the lightweight `*-service-interface` module and calls the static interface — it never depends on the implementation module directly.
+
+## EventBus for cross-component communication
+
+AntennaPod uses [GreenRobot EventBus](https://github.com/greenrobot/EventBus) (v3.3.1) to communicate between components that would otherwise need direct references to each other.
+
+All event classes live in the `:event` module. The EventBus index is generated at compile time using the `eventbus-annotation-processor` and registered in `PodcastApp.onCreate()`:
+
+```java
+EventBus.builder()
+        .addIndex(new ApEventBusIndex())
+        .logNoSubscriberMessages(false)
+        .sendNoSubscriberEvent(false)
+        .installDefaultEventBus();
+```
+
+The annotation processor makes subscriber lookup faster than runtime reflection. When you add a new event, define it in `:event` and annotate subscriber methods with `@Subscribe` in the consuming component.
+
+## Data flow: feeds from network to screen
+
+The following describes how a feed refresh moves data through the system:
+
+<Steps>
+  <Step title="Trigger">
+    A feed refresh is triggered by calling `FeedUpdateManager.runOnce()` (or the periodic WorkManager task). `FeedUpdateManager` is resolved through the service-interface pattern — the caller does not depend on `:net:download:service`.
+  </Step>
+  <Step title="Download">
+    `:net:download:service` schedules a `FeedUpdateWorker` via WorkManager. The worker fetches the raw XML over HTTP using the OkHttp client configured in `:net:common`, including SSL backports from `:net:ssl`.
+  </Step>
+  <Step title="Parse">
+    The raw XML is passed to `:parser:feed`, which produces `Feed` and `FeedItem` model objects defined in `:model`.
+  </Step>
+  <Step title="Store">
+    The parsed objects are written to the SQLite database managed by `:storage:database` (`PodDBAdapter`). Playback state, positions, and user preferences are stored separately in `:storage:preferences`.
+  </Step>
+  <Step title="Notify">
+    After the database write, an EventBus event (from `:event`) is posted. UI components subscribed to that event update their views reactively without needing a direct reference to the database layer.
+  </Step>
+  <Step title="Display">
+    UI modules such as `:ui:episodes` read from `:storage:database` and render the updated feed items using the shared components in `:ui:common` and images loaded by `:ui:glide`.
+  </Step>
+</Steps>

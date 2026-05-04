@@ -1,0 +1,96 @@
+---
+title: "Install AntennaPod: Google Play vs F-Droid setup guide"
+description: "Download AntennaPod from Google Play or F-Droid, understand the difference between build flavors, grant permissions, and complete your first-launch setup."
+---
+
+AntennaPod is available as a free download from two sources — Google Play and F-Droid — and this page explains the differences between them, what to expect during first launch, and how to handle the permissions the app requests.
+
+## Choose your installation source
+
+AntennaPod ships in two build flavors: `play` and `free`. Both contain the same core podcast functionality, but they differ in one important area.
+
+<Tabs>
+  <Tab title="Google Play">
+    The Play Store build (`play` flavor) includes **Chromecast support**, which lets you cast audio to any Google Cast-compatible speaker or TV. This is the only build difference — Chromecast requires the proprietary Google Cast SDK, which cannot be included in a fully open-source build.
+
+    Install from the Play Store:
+
+    **Package ID:** `de.danoeh.antennapod`
+
+    <Note>
+      The Play Store build requires Google Play Services to be present on your device for Chromecast functionality. The rest of the app works independently of Google services.
+    </Note>
+  </Tab>
+  <Tab title="F-Droid">
+    The F-Droid build (`free` flavor) contains no proprietary code or dependencies. It is the fully open-source version of AntennaPod, built directly from the same GPL-3.0 licensed source code available on GitHub.
+
+    Install from F-Droid:
+
+    **Package ID:** `de.danoeh.antennapod`
+
+    <Note>
+      The F-Droid build does not include Chromecast support. All other features — search, playback, downloads, sync, import/export — are identical to the Play Store version.
+    </Note>
+
+    <Tip>
+      On the F-Droid flavor, the iTunes/Apple Podcasts top list in the Discover tab requires a one-time confirmation tap before data is fetched. This is because the request contacts Apple's servers, and the app waits for your explicit consent before doing so.
+    </Tip>
+  </Tab>
+</Tabs>
+
+## Initial setup
+
+After installing and opening AntennaPod for the first time, the app launches directly into the main screen. There is no mandatory account creation or sign-in step.
+
+<Steps>
+  <Step title="Launch the app">
+    Open AntennaPod. The app starts on the **Home** screen, which shows your subscriptions, queue, and the Discover panel once you have added podcasts.
+  </Step>
+  <Step title="Review notification permission">
+    On Android 13 and later, the app will prompt you to grant the **Post Notifications** permission (`POST_NOTIFICATIONS`). This is used to show playback controls in the notification shade and to notify you when episode downloads complete. You can grant or deny this permission — playback still works without it, but you will not see the persistent player notification.
+  </Step>
+  <Step title="Add your first podcast">
+    Tap the **+** button or navigate to **Add podcast** to start subscribing. See [Adding podcasts](/getting-started/adding-podcasts) for the full walkthrough.
+  </Step>
+</Steps>
+
+## Permissions explained
+
+AntennaPod declares the following permissions in its manifest. None of them require accepting a dialog beyond the notification permission on Android 13+.
+
+<AccordionGroup>
+  <Accordion title="INTERNET">
+    Required to fetch podcast feeds, download episodes, and contact search directories (iTunes, fyyd, Podcast Index). The app cannot function without this permission.
+  </Accordion>
+  <Accordion title="POST_NOTIFICATIONS">
+    Used to display the persistent playback notification with media controls and to show download progress. Prompted at runtime on Android 13 and later.
+  </Accordion>
+  <Accordion title="FOREGROUND_SERVICE and WAKE_LOCK">
+    Required to keep the playback service running while the screen is off. Without these, audio would stop when you lock your phone.
+  </Accordion>
+  <Accordion title="ACCESS_NETWORK_STATE and ACCESS_WIFI_STATE">
+    Used to detect whether the device is on Wi-Fi or mobile data. AntennaPod can be configured to restrict automatic downloads to Wi-Fi only — these permissions make that check possible.
+  </Accordion>
+  <Accordion title="RECEIVE_BOOT_COMPLETED">
+    Allows AntennaPod to reschedule background tasks (such as automatic feed refresh) after a device reboot.
+  </Accordion>
+  <Accordion title="BLUETOOTH">
+    Supports Bluetooth audio device events, such as pausing playback when headphones are disconnected.
+  </Accordion>
+  <Accordion title="VIBRATE">
+    Used for haptic feedback in certain UI interactions.
+  </Accordion>
+</AccordionGroup>
+
+## Build types and debug builds
+
+If you are a developer building AntennaPod from source, the project defines two build types:
+
+- **`debug`** — Uses the application ID suffix `.debug`, so `de.danoeh.antennapod.debug`. This means the debug build can be installed alongside the release build on the same device.
+- **`release`** — Minification and resource shrinking are enabled. Uses a signing config defined in `gradle.properties`.
+
+Combined with the two flavors (`play` and `free`), there are four build variants: `playDebug`, `playRelease`, `freeDebug`, and `freeRelease`. The default build task for development is `assemblePlayDebug` or `assembleFreeDebug`.
+
+<Info>
+  For build instructions, see the [Building AntennaPod](/contributing/building) page in the Contributing section.
+</Info>

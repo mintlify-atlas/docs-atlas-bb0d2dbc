@@ -1,0 +1,159 @@
+---
+title: "Import and export podcast subscriptions and backups"
+description: "Export subscriptions as OPML or HTML, create full database backups to preserve playback history, restore from a backup, and migrate from other podcast apps."
+---
+
+AntennaPod gives you full ownership of your data. You can export your subscription list as a standard OPML file that any podcast app understands, or create a complete database backup that captures everything — subscriptions, playback positions, episode statuses, and queue contents. Both options are available under **Settings > Import/Export**.
+
+## OPML export
+
+OPML (Outline Processor Markup Language) is the universal interchange format for podcast subscription lists. AntennaPod's OPML export writes an OPML 2.0 document containing the title, feed URL, and website link for every active subscription.
+
+<Note>
+  The OPML file only contains your subscription list. Playback positions, played/unplayed status, favorites, and queue contents are not included. Use a [full database backup](#full-database-backup) if you need all of that data.
+</Note>
+
+<Steps>
+  <Step title="Open Import/Export settings">
+    In AntennaPod, go to **Settings** and tap **Import/Export**.
+  </Step>
+  <Step title="Tap Export OPML">
+    Tap **Export OPML**. Your device's file manager opens so you can choose where to save the file. The default filename is `antennapod-feeds-YYYY-MM-DD.opml`.
+  </Step>
+  <Step title="Save or share the file">
+    Choose a destination and save. A snackbar confirms the export succeeded and offers a **Share** button so you can send the file directly to another app or device.
+  </Step>
+</Steps>
+
+### Export as HTML
+
+If you want a human-readable list of your subscriptions — for example, to publish or archive it — use **Export HTML** instead. This produces a web page listing all your feeds with their titles and website links. The workflow is the same as OPML export.
+
+## OPML import
+
+Importing an OPML file subscribes AntennaPod to every feed listed in the file. This is the standard way to migrate from another podcast app.
+
+<Steps>
+  <Step title="Get your OPML file">
+    Export an OPML file from your previous podcast app. Consult that app's documentation for instructions. The file usually has an `.opml` or `.xml` extension.
+  </Step>
+  <Step title="Open Import/Export settings">
+    In AntennaPod, go to **Settings** and tap **Import/Export**, then tap **Import OPML**.
+  </Step>
+  <Step title="Select the file">
+    Your device's file picker opens. Navigate to and select the OPML file. AntennaPod parses the file and displays the list of feeds it found.
+  </Step>
+  <Step title="Confirm the subscriptions">
+    Review the list and confirm. AntennaPod subscribes to each feed and begins refreshing them in the background.
+  </Step>
+</Steps>
+
+<Info>
+  If the system file manager does not open, your device may not have one installed. Install a file manager app and try again.
+</Info>
+
+### What gets imported
+
+The OPML import adds every valid RSS/Atom feed URL found in the file as a new subscription. No playback state, episode statuses, or settings from the source app carry over — only the feed URLs. To restore a full AntennaPod backup (including play state), use [database import](#restoring-from-a-backup) instead.
+
+## Full database backup
+
+The database backup is an AntennaPod-specific format that captures your complete library. It is a copy of the internal SQLite database, saved as a `.db` file.
+
+**What the backup includes:**
+
+<CardGroup cols={2}>
+  <Card title="Subscriptions" icon="rss">
+    All subscribed feeds and their per-feed settings.
+  </Card>
+  <Card title="Playback positions" icon="circle-play">
+    Where you left off in every episode.
+  </Card>
+  <Card title="Played and unplayed status" icon="check">
+    Which episodes are marked as played.
+  </Card>
+  <Card title="Queue" icon="list">
+    Your current playback queue.
+  </Card>
+  <Card title="Favorites" icon="star">
+    All episodes you have starred.
+  </Card>
+  <Card title="Statistics" icon="chart-bar">
+    Accumulated listening time data.
+  </Card>
+</CardGroup>
+
+<Note>
+  Downloaded audio files are not included in the backup. Only the database is exported. You will need to re-download episodes after restoring.
+</Note>
+
+### Creating a manual backup
+
+<Steps>
+  <Step title="Open Import/Export settings">
+    Go to **Settings** and tap **Import/Export**.
+  </Step>
+  <Step title="Tap Export Database">
+    Tap **Export Database**. Your device's file manager opens. The default filename is `AntennaPodBackup-YYYY-MM-DD.db`.
+  </Step>
+  <Step title="Choose a location and save">
+    Pick a folder and save the file. A confirmation snackbar appears with a **Share** button if you want to copy the backup elsewhere immediately.
+  </Step>
+</Steps>
+
+### Enabling automatic backups
+
+AntennaPod can export the database automatically every three days to a folder you choose. It keeps the five most recent backup files and deletes older ones.
+
+<Steps>
+  <Step title="Enable automatic backup">
+    Go to **Settings > Import/Export** and toggle **Automatic Backup** on.
+  </Step>
+  <Step title="Select a backup folder">
+    Your device's folder picker opens. Choose where AntennaPod should save the backup files. AntennaPod will request persistent read/write permission for that folder.
+  </Step>
+</Steps>
+
+To disable automatic backups, toggle **Automatic Backup** off in the same screen. AntennaPod removes the scheduled job and no further backups are created, but existing backup files are not deleted.
+
+## Restoring from a backup
+
+<Warning>
+  Restoring a database replaces your current AntennaPod data entirely. The app will restart immediately after a successful import. Make sure you want to replace everything before proceeding.
+</Warning>
+
+<Steps>
+  <Step title="Open Import/Export settings">
+    Go to **Settings** and tap **Import/Export**.
+  </Step>
+  <Step title="Tap Import Database">
+    Tap **Import Database**. A confirmation dialog explains that your existing data will be overwritten.
+  </Step>
+  <Step title="Confirm and select the file">
+    Tap **Confirm**, then select your `.db` backup file in the file picker.
+  </Step>
+  <Step title="Wait for the import to finish">
+    AntennaPod copies the backup file, verifies it, and replaces the current database. When the import succeeds, a dialog appears and the app restarts automatically.
+  </Step>
+</Steps>
+
+<Note>
+  You cannot restore a backup that was created with a newer version of AntennaPod than the one currently installed. Update the app first, then restore.
+</Note>
+
+## Common use cases
+
+<AccordionGroup>
+  <Accordion title="Switching to a new phone">
+    Use the **Export Database** option on your old phone to create a full backup, copy the `.db` file to your new phone (via USB, cloud storage, or a messaging app), install AntennaPod on the new device, and use **Import Database** to restore everything.
+  </Accordion>
+  <Accordion title="Migrating from another podcast app">
+    Export an OPML file from your old app and use **Import OPML** in AntennaPod. Your subscriptions will be added and refreshed. Playback positions from the old app cannot be migrated because OPML does not carry that data.
+  </Accordion>
+  <Accordion title="Sharing your subscription list">
+    Use **Export OPML** or **Export HTML** and share the resulting file. OPML works with most podcast apps; HTML is better for publishing a human-readable list.
+  </Accordion>
+  <Accordion title="Exporting your favorites">
+    Use **Export Favorites** in the Import/Export screen to get an HTML file listing all your starred episodes. This is a one-way export — there is no corresponding favorites import.
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,110 @@
+{
+  "projectType": "saas",
+  "projectName": "AntennaPod",
+  "projectDescription": "AntennaPod is a free and open-source podcast manager for Android that lets users discover, subscribe to, download, and play podcasts with full control over their listening experience.",
+  "theme": "almond",
+  "primaryColor": "#238ae7",
+  "lightColor": "#83cfee",
+  "darkColor": "#041c34",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "User Guide",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "getting-started/installation",
+              "getting-started/adding-podcasts"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/playback",
+              "features/subscriptions",
+              "features/downloads",
+              "features/queue-and-inbox"
+            ]
+          },
+          {
+            "group": "Settings & Customization",
+            "pages": [
+              "settings/playback-settings",
+              "settings/download-settings",
+              "settings/user-interface",
+              "settings/notifications"
+            ]
+          },
+          {
+            "group": "Data & Sync",
+            "pages": [
+              "data/import-export",
+              "data/synchronization",
+              "data/statistics"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Contributing",
+        "groups": [
+          {
+            "group": "Contributing",
+            "pages": [
+              "contributing/overview",
+              "contributing/building",
+              "contributing/architecture",
+              "contributing/testing",
+              "contributing/translations"
+            ]
+          },
+          {
+            "group": "Modules",
+            "pages": [
+              "modules/app-structure",
+              "modules/playback",
+              "modules/networking",
+              "modules/storage"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Subscribe and manage podcast feeds (RSS/Atom)",
+    "Download episodes for offline listening",
+    "Background audio playback with media controls",
+    "Variable playback speed",
+    "Episode queue and inbox management",
+    "Chromecast support (Google Play flavor)",
+    "Podcast discovery via iTunes, fyyd, and other directories",
+    "Synchronization via Gpodder.net",
+    "OPML import/export for feed lists",
+    "Full database backup and restore",
+    "Home screen widget",
+    "Yearly listening rewind (Echo)",
+    "Episode transcripts display",
+    "Chapter support with navigation",
+    "Statistics and listening history"
+  ],
+  "publicApiSurface": [
+    "Feed (model class for podcast subscriptions)",
+    "FeedItem (model class for podcast episodes)",
+    "FeedMedia (model class for episode audio/video files)",
+    "Chapter (model class for episode chapters)",
+    "DBWriter (async database write operations)",
+    "PodDBAdapter (SQLite database adapter)",
+    "UserPreferences (user settings access)",
+    "ClientConfigurator (service registration at startup)",
+    "EpisodeDownloadWorker (background download via WorkManager)",
+    "FeedUpdateWorker (feed refresh via WorkManager)",
+    "PlaybackService (media playback service)",
+    "SyncService (external sync service)",
+    "ISyncService (sync backend interface)",
+    "OPML import/export (feed list interchange)",
+    "SubscriptionSearch (podcast discovery interface)"
+  ]
+}

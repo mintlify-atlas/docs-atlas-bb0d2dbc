@@ -1,0 +1,64 @@
+---
+title: "Translate AntennaPod into your language on Weblate"
+description: "Help translate AntennaPod via Weblate. Join a language team or request a new one, and learn how English source strings are managed in the :ui:i18n module."
+---
+
+AntennaPod is translated into more than 40 languages by community volunteers. All translation work happens on [Weblate](https://antennapod.org/contribute/translate) — not in GitHub pull requests. This keeps translation history clean and gives translators a dedicated interface without requiring them to use Git.
+
+## How to contribute translations
+
+<Steps>
+  <Step title="Go to the Weblate project page">
+    Visit [antennapod.org/contribute/translate](https://antennapod.org/contribute/translate) to reach the AntennaPod project on the hosted Weblate instance.
+  </Step>
+  <Step title="Join a language team or create a new one">
+    If your language already exists, click it and start translating. If it does not exist yet, you can request a new language team through the Weblate interface.
+  </Step>
+  <Step title="Translate or review strings">
+    Weblate shows untranslated and fuzzy strings. Translate them directly in the browser. You can also suggest corrections for existing translations and vote on alternatives.
+  </Step>
+</Steps>
+
+<Tip>
+  You can also follow the project's translation status badge on the [README](https://github.com/AntennaPod/AntennaPod) to see how complete each language is.
+</Tip>
+
+## Where string resources live
+
+All user-visible strings are stored in the `:ui:i18n` module, located at `./ui/i18n/` in the repository. English is the source language. Weblate reads from this module and synchronizes translated `strings.xml` files back to the repository automatically.
+
+```
+ui/i18n/
+└── src/
+    └── main/
+        └── res/
+            ├── values/          # English source strings
+            │   └── strings.xml
+            ├── values-de/       # German
+            ├── values-fr/       # French
+            └── ...              # Other languages
+```
+
+<Note>
+  Do not add new string resource files anywhere else in the codebase. All user-visible strings must go into `:ui:i18n` so they can be translated.
+</Note>
+
+## Guidelines for code contributors
+
+When you write code that includes new user-visible text:
+
+- Add all new strings to `:ui:i18n` only — not to `res/values/strings.xml` in any other module.
+- Write the string in English. Weblate handles all other languages.
+- Do not modify translated strings (non-English `values-*` files) in a code pull request. Those files are managed by Weblate; manual edits will be overwritten on the next sync.
+- Keep string keys descriptive and consistent with the existing naming style.
+
+<Warning>
+  Pull requests that include changes to translated string files (anything other than `values/strings.xml`) will need those changes reverted before merging. Only English source strings belong in code PRs.
+</Warning>
+
+## Translation guidelines for translators
+
+- **Accuracy over literalness**: Translate the meaning, not word-for-word. Natural phrasing in your language is more important than matching the exact English structure.
+- **Consistent terminology**: Use the same terms throughout (for example, always use the same word for "episode" or "feed" in your language).
+- **Placeholders**: Strings may contain placeholders like `%1$s` or `%d`. Keep these exactly as-is in your translation — they are filled in at runtime with dynamic values.
+- **Context**: If you are unsure what a string refers to, use Weblate's screenshot feature or look at the string key to understand where it appears in the app.

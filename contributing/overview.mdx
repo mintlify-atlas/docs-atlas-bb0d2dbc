@@ -1,0 +1,111 @@
+---
+title: "How to contribute code and translations to AntennaPod"
+description: "Contribute code, translations, bug reports, or beta testing to AntennaPod. Covers forking, branching, PR workflow, and Checkstyle code style rules."
+---
+
+AntennaPod is a community-driven project maintained entirely by volunteers. There are several ways to help — writing code, translating strings, reporting bugs, and testing beta releases are all valuable contributions.
+
+## Types of contributions
+
+<CardGroup cols={2}>
+  <Card title="Code" icon="code" href="/contributing/building">
+    Fix bugs, implement features, or improve the architecture. See the build guide to get your environment ready.
+  </Card>
+  <Card title="Translations" icon="language" href="/contributing/translations">
+    Translate AntennaPod into your language or improve an existing translation on Weblate.
+  </Card>
+  <Card title="Bug reports" icon="bug" href="https://github.com/AntennaPod/AntennaPod/issues/new?assignees=&labels=Type%3A+Possible+bug&template=bug_report.yml">
+    Report reproducible bugs using the issue template so maintainers can act on them quickly.
+  </Card>
+  <Card title="Beta testing" icon="flask" href="https://antennapod.org/documentation/general/beta">
+    Join the beta program and report issues before they reach stable users.
+  </Card>
+</CardGroup>
+
+## Before you write code
+
+Before opening a pull request, confirm that an approved issue exists for your change.
+
+- Issues labeled `Needs: Triage` or `Needs: Decision` have not been approved for work yet. Wait for those labels to be removed before starting.
+- Leave a comment on the issue to let others know you are working on it. You do not need to ask permission — just state your intent.
+- If you want to discuss approach, ask in the issue or join a [community call](https://antennapod.org/events/community-meeting).
+
+<Tip>
+  Looking for a good starting point? Browse issues tagged [Good first issue](https://github.com/AntennaPod/AntennaPod/labels/Good%20first%20issue) on GitHub.
+</Tip>
+
+## Fork, branch, and open a PR
+
+<Steps>
+  <Step title="Fork the repository">
+    Fork [AntennaPod/AntennaPod](https://github.com/AntennaPod/AntennaPod) on GitHub to create your own copy.
+  </Step>
+  <Step title="Create a branch from develop">
+    Base your branch on `develop`, not `main`. All active development happens on `develop`; `main` only receives merges at release time.
+
+    ```bash
+    git checkout develop
+    git checkout -b my-fix-branch
+    ```
+  </Step>
+  <Step title="Make your changes">
+    Write your code, add tests where appropriate, and run the code style checks locally before pushing.
+  </Step>
+  <Step title="Open a pull request">
+    Open the PR against the `develop` branch. Mention the related issue using a [linking keyword](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue) such as `Closes: #123` so GitHub closes the issue automatically on merge.
+  </Step>
+</Steps>
+
+<Warning>
+  Do not upgrade dependencies or build tools unless you have a specific reason. Dependency bumps can introduce hard-to-trace regressions and slow down review.
+</Warning>
+
+## Code style
+
+AntennaPod enforces code style with Checkstyle, Lint, and SpotBugs. Key rules from the Checkstyle configuration:
+
+- **Indentation**: 4-space indent, no tab characters anywhere in the file.
+- **Line length**: Maximum 120 characters (imports and URLs are exempt).
+- **Imports**: No wildcard imports (`import foo.*`). Unused imports are errors.
+- **Braces**: Always required, even for single-statement blocks. Opening brace on the same line; closing brace on its own line for class and method definitions.
+- **Naming**: `camelCase` for methods, fields, parameters, and local variables. Type parameters must end in `T` or be a single uppercase letter.
+- **One statement per line**; one top-level class per file.
+- **Javadoc**: `@param`, `@return`, `@throws`, `@deprecated` in that order. Non-empty descriptions required.
+
+Run all checks locally before pushing:
+
+```bash
+./gradlew checkstyle lint spotbugsPlayDebug spotbugsDebug
+```
+
+<Note>
+  Only fix style issues in code you wrote. Do not clean up pre-existing warnings in unrelated files — that inflates diffs and complicates review.
+</Note>
+
+## PR checklist
+
+Every pull request should satisfy the following before review is requested:
+
+<AccordionGroup>
+  <Accordion title="Issue exists and is approved">
+    Confirm the issue exists and does not have a `Needs: Triage` or `Needs: Decision` label.
+  </Accordion>
+  <Accordion title="Self-review completed">
+    Read through your diff line by line and verify every change is necessary.
+  </Accordion>
+  <Accordion title="Automated checks pass">
+    Run `./gradlew checkstyle lint spotbugsPlayDebug spotbugsDebug` with no errors.
+  </Accordion>
+  <Accordion title="Code follows style guidelines">
+    No wildcard imports, correct indentation, braces on all blocks, 120-character line limit.
+  </Accordion>
+  <Accordion title="Issue linked in description">
+    Include `Closes: #<issue-number>` in the PR description (above the checklist).
+  </Accordion>
+  <Accordion title="Tests added for core features">
+    New or modified core functionality should include unit or instrumentation tests.
+  </Accordion>
+  <Accordion title="Only English strings changed">
+    Do not translate strings in code PRs. All translations happen on [Weblate](https://antennapod.org/contribute/translate).
+  </Accordion>
+</AccordionGroup>

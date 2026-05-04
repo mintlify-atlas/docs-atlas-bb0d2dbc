@@ -1,0 +1,107 @@
+---
+title: "Build AntennaPod from source using Gradle and Android Studio"
+description: "Set up your Android development environment, clone the repository, choose the free or play build flavor, and compile AntennaPod using Gradle or Android Studio."
+---
+
+AntennaPod is a standard Android application built with Gradle. You can compile it from source using Android Studio or the command line.
+
+## Prerequisites
+
+Before cloning the repository, make sure you have the following installed:
+
+<CardGroup cols={2}>
+  <Card title="Android Studio" icon="android">
+    The recommended IDE. Download the latest stable release from [developer.android.com](https://developer.android.com/studio).
+  </Card>
+  <Card title="Android SDK" icon="wrench">
+    Installed automatically by Android Studio. The project targets **SDK 36** and requires a minimum of **SDK 23** (Android 6.0).
+  </Card>
+  <Card title="JDK 21" icon="coffee">
+    The project compiles with Java 21 source and target compatibility. Android Studio bundles a suitable JDK.
+  </Card>
+  <Card title="Git" icon="code-branch">
+    Required to clone the repository. Available at [git-scm.com](https://git-scm.com).
+  </Card>
+</CardGroup>
+
+## Cloning the repository
+
+Clone your fork of the repository using Git:
+
+```bash
+git clone https://github.com/<your-username>/AntennaPod.git
+```
+
+<Note>
+  The repository includes a large Git submodule that contains app store metadata and screenshots used by the F-Droid and Google Play listings. You **do not need** this submodule for normal development. Omit `--recurse-submodules` when cloning to save time and disk space.
+</Note>
+
+## Opening in Android Studio
+
+<Tabs>
+  <Tab title="From the command line (recommended)">
+    After cloning, open Android Studio and go to **File → New → Project from existing sources**, then select the cloned directory. Android Studio will detect the Gradle project automatically.
+  </Tab>
+  <Tab title="Directly from Android Studio">
+    Go to **File → New → Project from version control**, enter the remote URL of your fork, and let Android Studio clone and open the project in one step.
+  </Tab>
+</Tabs>
+
+Wait for the initial Gradle sync to complete. This can take several minutes the first time as Gradle downloads all dependencies.
+
+## Build flavors
+
+AntennaPod uses a `market` product flavor dimension with two flavors defined in `playFlavor.gradle`:
+
+| Flavor | Distribution | Notes |
+|--------|-------------|-------|
+| `free` | F-Droid | Fully open-source build. Contains no proprietary SDKs. |
+| `play` | Google Play | Includes the Cast SDK for Chromecast support (`:playback:cast` module). |
+
+The `free` flavor is the default for local development. Use `play` if you are working on Chromecast-related functionality.
+
+## Build commands
+
+All Gradle commands must be run from the repository root. Do not change directories — the project is already configured for the root.
+
+<CodeGroup>
+
+```bash Assemble free debug APK
+./gradlew :app:assembleFreeDebug
+```
+
+```bash Assemble play debug APK (Chromecast)
+./gradlew :app:assemblePlayDebug
+```
+
+```bash List all available tasks
+./gradlew projects
+```
+
+</CodeGroup>
+
+<Note>
+  The shorthand `./gradlew :app:assembleDebug` builds all debug variants. Use the explicit flavor tasks above to target a specific build. The debug build appends `.debug` to the application ID (`de.danoeh.antennapod.debug`) so it can coexist with a release install.
+</Note>
+
+## Installing and running on a device or emulator
+
+<Steps>
+  <Step title="Start an emulator or connect a device">
+    In Android Studio, open the **Device Manager** and start an Android Virtual Device (AVD), or connect a physical device with USB debugging enabled.
+  </Step>
+  <Step title="Install via Gradle">
+    Run the install task for your chosen flavor and build type:
+
+    ```bash
+    ./gradlew :app:installPlayDebug
+    ```
+  </Step>
+  <Step title="Launch the app">
+    Press the **Run** button in Android Studio, or launch the app manually from the device home screen. The debug variant is named **AntennaPod Debug** to distinguish it from a release install.
+  </Step>
+</Steps>
+
+<Tip>
+  You can also press the **Play** button directly in Android Studio after the Gradle sync finishes — it will build, install, and launch the app in one step.
+</Tip>

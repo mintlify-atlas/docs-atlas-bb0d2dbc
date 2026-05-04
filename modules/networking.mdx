@@ -1,0 +1,175 @@
+---
+title: "Networking modules: discovery, downloads, SSL, and sync"
+description: "Reference for AntennaPod's :net modules — shared OkHttp client, podcast search, WorkManager downloads, SSL backports, and Gpodder.net and Nextcloud sync."
+---
+
+All of AntennaPod's outbound network traffic goes through modules under the `:net` namespace. Every HTTP request uses the OkHttp client configured centrally in `:net:common`, and the more complex subsystems (downloads, sync) follow the service-interface/service split so that consumers never need to import the implementation.
+
+## `:net:common` — shared HTTP infrastructure
+
+`:net:common` is the foundation for every other net module. It provides:
+
+- **Shared `OkHttpClient`** — a single, correctly configured client instance (connection pooling, timeouts, redirects) used by all other net modules.
+- **User-agent configuration** — sets the `User-Agent` header to the AntennaPod version string on every request.
+- **HTTP helpers** — utilities for checking response codes, reading response bodies, and handling common error cases.
+
+<Note>
+All net modules must use the `OkHttpClient` from `:net:common` rather than constructing their own. This ensures that SSL configuration, proxy settings, and the user-agent header are applied uniformly.
+</Note>
+
+## `:net:discovery` — podcast search and discovery
+
+`:net:discovery` contains the APIs for searching podcast directories and loading top-chart recommendations.
+
+### Architecture
+
+Every podcast directory backend is a separate class that implements the common `PodcastSearcher` interface. The `PodcastSearcherRegistry` maps each backend to a display name and routes search queries to the correct implementation.
+
+| Class | Backend |
+|---|---|
+| `ItunesPodcastSearcher` | Apple Podcasts / iTunes Search API |
+| `FyydPodcastSearcher` | fyyd podcast search |
+| `PodcastIndexPodcastSearcher` | Podcast Index (podcastindex.org) |
+| `ItunesTopListLoader` | iTunes top-charts feed |
+| `CombinedSearcher` | Fans out a query to all registered backends and merges results |
+
+Search results are normalised into `PodcastSearchResult` objects containing a title, feed URL, author, and artwork URL, regardless of which backend produced them.
+
+```java
+// Searching across all backends
+PodcastSearcher searcher = new CombinedSearcher();
+searcher.search("linux unplugged")
+        .subscribe(results -> displayResults(results));
+```
+
+<Tip>
+The `:ui:discovery` module owns the screens that display these results. `:net:discovery` has no UI dependencies — it only returns plain `PodcastSearchResult` lists.
+</Tip>
+
+## `:net:download` — episode and feed downloads
+
+The download subsystem is split into two modules following the service-interface pattern.
+
+### `:net:download:service-interface`
+
+This module defines the public contract that the rest of the app uses to trigger downloads. The key class is `DownloadServiceInterface`, a singleton whose concrete implementation is injected by `ClientConfigurator` at startup.
+
+| Class | Role |
+|---|---|
+| `DownloadServiceInterface` | Singleton facade; other modules call `DownloadServiceInterface.get().download(...)` |
+| `DownloadServiceInterfaceStub` | No-op stub registered in test builds |
+| `FeedUpdateManager` | Interface for requesting a feed refresh |
+| `AutoDownloadManager` | Decides which episodes qualify for automatic download based on user rules |
+| `DownloadRequestCreator` | Builds `DownloadRequest` objects from `FeedItem` or URL |
+
+<Info>
+Modules that need to trigger a download should depend only on `:net:download:service-interface`. Depending on `:net:download:service` directly would pull in WorkManager and OkHttp as transitive dependencies.
+</Info>
+
+### `:net:download:service`
+
+This module contains the actual download implementation, running in the background via WorkManager.
+
+<CardGroup cols={2}>
+  <Card title="EpisodeDownloadWorker" icon="download">
+    A WorkManager `Worker` that downloads a single episode file. Streams the response body directly to disk, posts progress via `EpisodeDownloadEvent`, and updates the database on completion.
+  </Card>
+  <Card title="FeedUpdateWorker" icon="refresh-cw">
+    A WorkManager `Worker` that fetches and parses a feed URL. Uses `ConnectivityActionReceiver` to respect the "only on Wi-Fi" setting and re-schedules on connectivity change.
+  </Card>
+</CardGroup>
+
+After a successful episode download, `MediaDownloadedHandler` runs post-processing steps: tag extraction via `:parser:media`, chapter merging, and an `EpisodeDownloadEvent` broadcast.
+
+The `autodownload/` package contains logic for evaluating auto-download eligibility and the `NewEpisodesNotification` helper that fires when new episodes arrive during a background feed refresh.
+
+### Download lifecycle
+
+<Steps>
+  <Step title="Request creation">
+    A UI action calls `DownloadServiceInterface.get().download(context, feedItem)`. `DownloadRequestCreator` resolves the remote URL and constructs a `DownloadRequest`.
+  </Step>
+  <Step title="WorkManager enqueue">
+    `DownloadServiceInterfaceImpl` enqueues a `OneTimeWorkRequest` for `EpisodeDownloadWorker` with the request as input data.
+  </Step>
+  <Step title="Download execution">
+    `EpisodeDownloadWorker` opens an OkHttp stream, writes chunks to a temp file, and posts `EpisodeDownloadEvent` progress updates.
+  </Step>
+  <Step title="Post-processing">
+    On success, `MediaDownloadedHandler` extracts embedded chapters, updates `FeedMedia` in the database via `DBWriter`, and moves the temp file to its final location.
+  </Step>
+  <Step title="Notification">
+    `DownloadAnnouncer` posts a status-bar notification summarising completed and failed downloads.
+  </Step>
+</Steps>
+
+## `:net:ssl` — SSL backports
+
+`:net:ssl` wraps the [Conscrypt](https://github.com/google/conscrypt) library to enable modern TLS cipher suites on older Android versions that ship with outdated system SSL stacks.
+
+The module installs Conscrypt as the default security provider during `PodcastApp` initialisation, transparently affecting all `OkHttpClient` instances created after that point. No other module needs to reference this module directly — it is initialised once by `:app`.
+
+## `:net:sync` — synchronisation
+
+The sync subsystem keeps playback positions and subscription lists consistent across devices. It is designed around a backend-agnostic queue-and-flush architecture.
+
+```
+:net:sync (folder)
+├── :net:sync:service-interface   # ISyncService, SynchronizationQueue
+├── :net:sync:service             # SyncService, SynchronizationQueueStorage
+└── :net:sync:gpoddernet          # Gpodder.net REST backend
+```
+
+### `:net:sync:service-interface`
+
+Defines the contracts that backend implementations and consumers must satisfy.
+
+| Class / Interface | Role |
+|---|---|
+| `ISyncService` | Interface that every sync backend implements. Methods: `login()`, `logout()`, `uploadSubscriptionChanges()`, `downloadSubscriptionChanges()`, `uploadEpisodeActions()`, `downloadEpisodeActions()`. |
+| `SynchronizationQueue` | Interface for queuing local changes (subscription adds/removes, episode action recordings) before they are uploaded. |
+| `SynchronizationQueueStub` | No-op implementation for builds or configurations without sync. |
+| `EpisodeAction` | Represents a single playback event (play, pause, download) that will be uploaded to the backend. |
+| `SynchronizationProvider` | Enum listing registered providers: `GPODDER_NET` and `NEXTCLOUD_GPODDER`. |
+
+### `:net:sync:service`
+
+The orchestration layer that drives sync runs.
+
+| Class | Role |
+|---|---|
+| `SyncService` | Coordinates a full sync cycle: reads pending changes from `SynchronizationQueueStorage`, calls the active `ISyncService` backend, and merges returned remote changes into the local database. |
+| `SynchronizationQueueStorage` | Persists the pending-changes queue in `SharedPreferences` so that queued actions survive process death before they are uploaded. |
+| `SynchronizationQueueImpl` | In-memory `SynchronizationQueue` implementation backed by `SynchronizationQueueStorage`. |
+| `EpisodeActionFilter` | Deduplicates and validates episode actions before upload (removes redundant pause/play pairs, etc.). |
+| `LockingAsyncExecutor` | Ensures that only one sync run executes at a time even if multiple triggers arrive. |
+
+### `:net:sync:gpoddernet`
+
+Implements `ISyncService` against the [Gpodder.net REST API](https://gpoddernet.readthedocs.io/). This is the only sync backend currently shipped with AntennaPod.
+
+The implementation:
+- Authenticates with HTTP Basic Auth.
+- Maps `EpisodeAction` objects to the Gpodder.net `episode-action` JSON format.
+- Maps `SubscriptionChanges` to the Gpodder.net `subscriptions` delta format.
+- Stores the server's `timestamp` (used as a cursor for incremental sync) in `SynchronizationCredentials`.
+
+```java
+// Typical sync flow inside SyncService
+ISyncService backend = SynchronizationProvider.GPODDER.getService();
+SubscriptionChanges remote = backend.downloadSubscriptionChanges(lastSyncTimestamp);
+queue.uploadSubscriptionChanges(localAdds, localRemoves);
+backend.uploadSubscriptionChanges(localAdds, localRemoves);
+```
+
+<AccordionGroup>
+  <Accordion title="How sync is triggered">
+    Sync runs are scheduled via WorkManager as periodic work. They also run immediately when the user taps "sync now" in Settings and are re-triggered after a successful login. The `SyncServiceEvent` EventBus event notifies the UI when a run starts or finishes.
+  </Accordion>
+  <Accordion title="Conflict resolution">
+    Episode actions are filtered by `EpisodeActionFilter` before upload. For position conflicts, the most recent timestamp wins. Subscription changes are applied additively — a remote "add" is not cancelled by a local "remove" queued after the last sync unless both sides are explicitly submitted.
+  </Accordion>
+  <Accordion title="Adding a new sync backend">
+    Implement `ISyncService`, register the new provider in `SynchronizationProvider`, and hook it up in `ClientConfigurator`. No changes to `SyncService` or `SynchronizationQueueStorage` are required.
+  </Accordion>
+</AccordionGroup>

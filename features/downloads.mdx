@@ -1,0 +1,116 @@
+---
+title: "Downloading episodes: manual, automatic, and storage"
+description: "Download podcast episodes on demand or automatically in AntennaPod. Manage storage, configure per-feed download policies, and monitor status and errors."
+---
+
+AntennaPod can download episodes to your device for offline listening. Downloads run in the background using Android WorkManager so they continue even when the app is not in the foreground.
+
+## Downloading an episode manually
+
+To download a single episode, find it in any episode list — the feed view, the inbox, the queue, or the all-episodes screen — and tap the **download** icon next to the episode title.
+
+The icon cycles through three states:
+
+| State | Meaning |
+|-------|---------|
+| Download icon | Episode is not downloaded |
+| Progress circle | Download is in progress |
+| Checkmark / delete icon | Episode is downloaded and stored locally |
+
+Tap the progress circle to cancel an in-progress download.
+
+## Automatic downloads
+
+AntennaPod can download new episodes automatically when a feed refreshes. Auto-download respects network conditions and per-feed settings.
+
+<Steps>
+  <Step title="Enable auto-download globally">
+    Go to **Settings → Downloads → Auto-download episodes** and turn on the toggle.
+  </Step>
+  <Step title="Configure per-feed overrides">
+    Open a feed → **⋮** → **Feed settings** → **Auto-download**. Set it to **Always download** or **Never download** to override the global setting for that feed, or leave it on **Use global default**.
+  </Step>
+  <Step title="Set network restrictions">
+    Under **Settings → Downloads**, choose whether auto-downloads run on Wi-Fi only or also on mobile data. You can also set a mobile data limit.
+  </Step>
+  <Step title="Set an episode limit">
+    Under **Settings → Downloads → Episode cache**, limit the total number of downloaded episodes AntennaPod keeps at once. When the limit is reached, the oldest played episodes are removed to make room.
+  </Step>
+</Steps>
+
+<Note>
+  Auto-download is triggered by `EpisodeDownloadWorker`, which is scheduled via WorkManager each time a feed refresh completes.
+</Note>
+
+## Download policies per feed
+
+Each subscription can override the global auto-download setting independently. The `AutoDownloadSetting` enum in `FeedPreferences` provides three states:
+
+- **`GLOBAL`** — defer to the app-wide auto-download setting.
+- **`ENABLED`** — always auto-download new episodes from this feed.
+- **`DISABLED`** — never auto-download new episodes from this feed.
+
+This means you can enable auto-download globally while opting out specific noisy feeds, or keep auto-download off globally while opting in to a single high-priority show.
+
+## Storage management
+
+<CardGroup cols={2}>
+  <Card title="Download location" icon="folder">
+    By default, episodes are saved to the app's external storage directory. Go to **Settings → Storage → Data folder** to choose a different location, including an SD card if your device supports it.
+  </Card>
+  <Card title="Episode cache limit" icon="database">
+    Set a maximum number of downloaded episodes under **Settings → Downloads → Episode cache**. AntennaPod automatically deletes the oldest played episodes when new ones are downloaded past this limit.
+  </Card>
+  <Card title="Auto-delete after playback" icon="trash">
+    Enable **Settings → Downloads → Delete removed episodes** to automatically remove downloaded files once an episode is marked as played. Individual feeds can override this behavior in their per-feed settings.
+  </Card>
+  <Card title="Bulk delete" icon="broom">
+    From the **Downloads** screen, use the **⋮** menu → **Delete played episodes** to remove all downloaded files that have already been played.
+  </Card>
+</CardGroup>
+
+<Tip>
+  Long-press any downloaded episode to enter multi-select mode and delete several files at once.
+</Tip>
+
+## Viewing download status
+
+Tap **Downloads** in the bottom navigation or side drawer to see the downloads screen. It shows:
+
+- Episodes currently downloading, with a progress indicator.
+- All episodes that have been fully downloaded and are stored locally.
+
+You can sort the list by date, duration, episode title, or file size using **⋮** → **Sort**.
+
+## Viewing download errors and logs
+
+If a download fails, AntennaPod logs the error with a reason code.
+
+<Steps>
+  <Step title="Open the download log">
+    From the **Downloads** screen, tap **⋮** → **Download log**.
+  </Step>
+  <Step title="Read the error details">
+    Each failed download entry shows the episode title, feed name, timestamp, and an error message explaining why the download failed (for example, network error, HTTP 403, or disk full).
+  </Step>
+  <Step title="Retry a failed download">
+    Tap a failed entry in the log to retry the download immediately.
+  </Step>
+</Steps>
+
+Common download failure reasons include:
+
+<AccordionGroup>
+  <Accordion title="Network error">
+    The connection was interrupted or timed out. Check your internet connection and try again.
+  </Accordion>
+  <Accordion title="HTTP error (4xx or 5xx)">
+    The server returned an error. A `403 Forbidden` usually means the episode requires authentication or is behind a paywall. A `404 Not Found` means the file has been removed by the publisher.
+  </Accordion>
+  <Accordion title="Not enough storage">
+    The device storage is full. Free up space or change the download location to an SD card.
+  </Accordion>
+  <Accordion title="Download cancelled">
+    You or the system cancelled the download. Tap the episode again to restart it.
+  </Accordion>
+</AccordionGroup>

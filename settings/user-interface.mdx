@@ -1,0 +1,96 @@
+---
+title: "UI settings: theme, navigation layout, and swipe actions"
+description: "Customize AntennaPod's light or dark theme, Material You colors, episode cover art, swipe actions per list, navigation bar vs drawer, and default sort order."
+---
+
+AntennaPod's user interface settings let you adjust how the app looks and how you navigate through it. Open them via **Settings → User interface**.
+
+## Theming
+
+<AccordionGroup>
+  <Accordion title="Theme">
+    Switches between light, dark, and system-default themes. When set to **Follow system**, AntennaPod matches your device's dark mode toggle automatically. Changing this setting restarts the current screen to apply the new theme immediately.
+  </Accordion>
+
+  <Accordion title="Pure black dark theme">
+    When enabled alongside a dark theme, AntennaPod uses true black (`#000000`) for backgrounds rather than a dark grey. This reduces battery usage on OLED screens and can reduce eye strain in low light. Disabled by default. Changing this setting restarts the current screen.
+  </Accordion>
+
+  <Accordion title="Tinted colors (Material You)">
+    When enabled, AntennaPod tints its UI using your Android wallpaper's color palette via Material You. Only available on Android 12 and later. Disabled by default. Changing this setting restarts the current screen.
+  </Accordion>
+</AccordionGroup>
+
+## Episode information
+
+<AccordionGroup>
+  <Accordion title="Episode cover art">
+    When enabled (the default), episode artwork is shown for each episode in lists and on the player screen. When disabled, the podcast's feed artwork is used instead. This affects episode list rows, the mini player, and the full player screen.
+  </Accordion>
+
+  <Accordion title="Show remaining time">
+    Toggles whether the time display beneath episode rows and in the player shows **remaining time** (time left to listen) or **total duration**. Disabled by default, meaning total duration is shown. This change takes effect immediately on all visible episode lists and the player.
+  </Accordion>
+
+  <Accordion title="Time counts respect playback speed">
+    When enabled, the remaining time displayed adjusts for the current playback speed — so a 60-minute episode playing at 2× shows 30 minutes remaining. When disabled (the default), remaining time is always shown in wall-clock time at 1×.
+  </Accordion>
+</AccordionGroup>
+
+## Navigation and behavior
+
+<AccordionGroup>
+  <Accordion title="Default screen">
+    Sets which screen AntennaPod opens to when the app launches. Choose from Home, Subscriptions, Inbox, Queue, Episodes, Downloads, or **Remember last screen** to return to wherever you were when you last closed the app. Defaults to Home.
+  </Accordion>
+
+  <Accordion title="Bottom navigation bar">
+    Switches between a bottom navigation bar and a side navigation drawer. Bottom navigation (the default) shows the main sections along the bottom of the screen. Disabling this reverts to a left-side navigation drawer.
+
+    <Warning>
+      The bottom navigation bar is the recommended layout. The side drawer is considered legacy and may be deprecated in a future version.
+    </Warning>
+  </Accordion>
+
+  <Accordion title="Navigation drawer items">
+    Tap this preference to open a dialog where you can show, hide, and reorder the sections in the navigation drawer. Sections you hide do not appear in the drawer but remain accessible via other routes.
+  </Accordion>
+
+  <Accordion title="Back button opens drawer">
+    When enabled, pressing the Android back button from the main screen opens the navigation drawer instead of minimizing the app. Disabled by default. This setting is disabled when the bottom navigation bar is active because the drawer is not shown in that mode.
+  </Accordion>
+</AccordionGroup>
+
+## Episode lists
+
+<AccordionGroup>
+  <Accordion title="Default episode sort order">
+    Sets the default sort order applied to episode lists across the app. Tap this preference to choose from options such as date (newest or oldest first), title, duration, and more. Individual lists remember their own sort order after you change it manually, so this setting acts as the starting point for lists that have not been customized.
+  </Accordion>
+
+  <Accordion title="Swipe actions">
+    Opens a sub-screen where you can configure what happens when you swipe left or right on episode rows. Swipe actions are configured separately for each list:
+
+    - Queue
+    - Inbox
+    - Episodes
+    - Downloads
+    - History
+    - Favorites
+    - Individual subscription feeds
+
+    Tap any list in the sub-screen to choose the action for the left and right swipe directions. Available actions include adding to or removing from the queue, downloading, marking as played, and favoriting.
+  </Accordion>
+
+  <Accordion title="Stream instead of download">
+    When enabled, the primary action button on episode rows becomes **Stream** instead of **Download**. This is useful if you prefer to listen on demand without filling device storage. AntennaPod may also suggest enabling this based on your listening patterns. Disabled by default.
+  </Accordion>
+
+  <Accordion title="Play button in downloads">
+    When enabled, a play button appears directly in the Downloads screen so you can start playback from there without opening the full episode. Disabled by default.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  If you switch from the bottom navigation bar to the drawer layout, go to **Navigation drawer items** to re-order the sections so your most-used screens are at the top.
+</Tip>

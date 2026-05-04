@@ -1,0 +1,108 @@
+---
+title: "Add podcasts: search directories, paste URL, or import OPML"
+description: "Search iTunes, Podcast Index, and fyyd by name, paste an RSS feed URL, or import an OPML file from another app to migrate your subscriptions to AntennaPod."
+---
+
+AntennaPod gives you several ways to add podcasts: searching by name across multiple directories, pasting a direct feed URL, or importing a bulk OPML file from another app. This page covers all three methods and describes what happens after you subscribe.
+
+## Search by name or keyword
+
+The **Discover** and **Search** screens let you find podcasts by querying one or more podcast directories. AntennaPod queries the following directories:
+
+<CardGroup cols={2}>
+  <Card title="Apple Podcasts" icon="apple" href="https://podcasts.apple.com">
+    The iTunes/Apple Podcasts catalog. One of the largest podcast directories, queried via the iTunes Search API. Also used to power the top-list charts in the Discover tab, filtered by country.
+  </Card>
+  <Card title="Podcast Index" icon="database" href="https://podcastindex.org">
+    An open, community-maintained podcast index. Queried via the Podcast Index API with authenticated requests.
+  </Card>
+  <Card title="fyyd" icon="list" href="https://fyyd.de">
+    A European podcast directory. Results from fyyd are merged with other sources in the combined search view.
+  </Card>
+</CardGroup>
+
+When you type a query, AntennaPod runs a **combined search** across Apple Podcasts and Podcast Index simultaneously, then merges and ranks the results by a weighted score. fyyd results are available separately via its own search tab.
+
+<Steps>
+  <Step title="Open the Add podcast screen">
+    Tap the **+** button on the Home or Subscriptions screen to open the podcast addition flow.
+  </Step>
+  <Step title="Type your search query">
+    Enter a podcast name or keyword in the search field. Results appear as a grid of podcast artwork with titles and author names.
+  </Step>
+  <Step title="Choose a podcast from the results">
+    Tap any result to open the podcast preview screen, which shows the feed description and a list of recent episodes.
+  </Step>
+  <Step title="Subscribe">
+    Tap **Subscribe** on the podcast preview screen. AntennaPod adds the feed to your subscriptions and immediately fetches the episode list.
+  </Step>
+</Steps>
+
+### Discover tab and top lists
+
+The **Discover** tab on the Home screen shows a grid of top podcasts from the iTunes top list for your country. The country is detected automatically from your device locale but can be changed in the Discover settings. You can also hide the Discover section entirely if you prefer not to contact Apple's servers.
+
+<Tip>
+  On the F-Droid build, the Discover top list requires a one-time confirmation tap before any data is loaded, because loading the list contacts Apple's servers.
+</Tip>
+
+## Add by RSS or Atom feed URL
+
+If you know the direct URL of a podcast's RSS or Atom feed, you can add it without going through a directory search.
+
+<Steps>
+  <Step title="Open the Add podcast screen">
+    Tap the **+** button from the Home or Subscriptions screen.
+  </Step>
+  <Step title="Paste or type the feed URL">
+    Select the **Add podcast by RSS address** option and enter the full URL of the feed — for example, `https://feeds.example.com/mypodcast.rss`.
+  </Step>
+  <Step title="Confirm the feed">
+    AntennaPod fetches the feed and shows a preview with the podcast title and recent episodes. Tap **Subscribe** to confirm.
+  </Step>
+</Steps>
+
+<Note>
+  AntennaPod also handles Apple Podcasts page URLs (the `podcasts.apple.com` domain). If you paste one of those links, AntennaPod resolves it to the underlying RSS feed URL by looking up the iTunes ID via the iTunes API before subscribing.
+</Note>
+
+<Warning>
+  Some feeds require authentication or are behind a paywall. AntennaPod supports HTTP Basic Auth credentials — you can add them via the feed settings after subscribing.
+</Warning>
+
+## Import from an OPML file
+
+OPML (Outline Processor Markup Language) is the standard format for exporting and importing podcast subscription lists. If you are migrating from another podcast app, export your subscriptions as an OPML file from that app and then import it into AntennaPod.
+
+<Steps>
+  <Step title="Export your OPML file from your current app">
+    In your existing podcast app, look for an export or backup option. The output is typically a `.opml` or `.xml` file. Transfer it to your Android device if needed.
+  </Step>
+  <Step title="Open the OPML import screen in AntennaPod">
+    Go to **Settings → Import/Export → Import from OPML**, or share the OPML file directly to AntennaPod from your file manager. AntennaPod registers itself as a handler for `.opml` files.
+  </Step>
+  <Step title="Select which feeds to import">
+    AntennaPod parses the OPML file and displays the list of podcasts it contains. All feeds are selected by default. Use the **Select all** or **Deselect all** menu options, or tap individual items to adjust your selection.
+  </Step>
+  <Step title="Confirm the import">
+    Tap **Confirm**. AntennaPod subscribes to all selected feeds and immediately triggers a feed refresh to fetch episode lists. You are returned to the main screen once the import is queued.
+  </Step>
+</Steps>
+
+<Info>
+  The OPML importer reads both UTF-8 and BOM-encoded files. If the file starts with a byte order mark, AntennaPod detects and handles the encoding automatically.
+</Info>
+
+<Note>
+  OPML import only transfers feed URLs and podcast titles — it does not restore playback history, per-feed settings, or downloaded files. To do a full migration including playback state, use the **AntennaPod database backup** format instead. See [Import and export](/data/import-export) for details.
+</Note>
+
+## What happens after subscribing
+
+When you subscribe to a podcast by any of the methods above, AntennaPod performs the same sequence of actions:
+
+1. **Saves the feed URL** to the local database with the podcast title.
+2. **Fetches the feed** immediately to retrieve the episode list.
+3. **Applies your default settings** for the new feed, including auto-download behavior and notification preferences.
+
+You can configure per-feed behavior — such as whether to auto-download new episodes or keep a certain number of episodes — by long-pressing the podcast in your subscription list and opening its settings.

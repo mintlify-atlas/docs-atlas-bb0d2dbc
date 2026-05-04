@@ -1,0 +1,99 @@
+---
+title: "Playback settings: speed, interruptions, and queue behavior"
+description: "Configure playback speed, fast-forward and rewind intervals, smart mark as played, hardware button actions, audio ducking, and queue behavior in AntennaPod."
+---
+
+AntennaPod's playback settings let you tune every aspect of how episodes play — from the speed they run at, to what happens when you pull out your headphones, to how the queue behaves when an episode ends. Open them via **Settings → Playback**.
+
+## Playback speed and controls
+
+<AccordionGroup>
+  <Accordion title="Playback speed">
+    Tap **Playback speed** to open the speed picker. You can set a global default speed and select which speed values appear in the quick-access list during playback. The picker supports values from 0.5× to 3.0×.
+
+    To override the speed for a single podcast, open the feed, tap the three-dot menu, and choose **Feed settings**. The per-feed speed applies only to episodes from that feed and takes precedence over the global default.
+  </Accordion>
+
+  <Accordion title="Fast forward interval">
+    Sets how many seconds the fast-forward button skips. Tap **Fast forward** to enter a custom value in seconds. The default is 30 seconds.
+  </Accordion>
+
+  <Accordion title="Rewind interval">
+    Sets how many seconds the rewind button moves back. Tap **Rewind** to enter a custom value in seconds. The default is 10 seconds.
+  </Accordion>
+</AccordionGroup>
+
+## Interruptions
+
+These settings control what happens when audio focus changes or a headset is disconnected.
+
+<AccordionGroup>
+  <Accordion title="Pause on headset disconnect">
+    When enabled, AntennaPod pauses playback automatically whenever a wired headset or headphones are unplugged. Enabled by default.
+
+    <Note>
+      On Android 12 and later, this behavior is controlled by the Android system rather than AntennaPod, so this toggle is hidden on those devices.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Resume on headset reconnect">
+    When **Pause on headset disconnect** is on, this option lets AntennaPod resume playback automatically when the same wired headset is plugged back in. Enabled by default. Hidden on Android 12+.
+  </Accordion>
+
+  <Accordion title="Resume on Bluetooth reconnect">
+    Similar to the wired headset option above, but applies to Bluetooth audio devices. Disabled by default. Hidden on Android 12+.
+  </Accordion>
+
+  <Accordion title="Audio ducking (pause for focus loss)">
+    Controls whether AntennaPod pauses when another app requests temporary audio focus — for example, when a navigation prompt or notification sound plays. When enabled (the default), playback pauses during the interruption and resumes automatically once it ends. Disable this if you prefer uninterrupted playback and don't want AntennaPod to react to other apps claiming audio focus.
+  </Accordion>
+</AccordionGroup>
+
+## Hardware buttons
+
+AntennaPod lets you reassign the physical media buttons on headsets and remotes.
+
+<AccordionGroup>
+  <Accordion title="Forward button action">
+    Chooses what the hardware forward or next-track button does during playback. Options include fast forward, skip to next chapter, and skip to next episode. Defaults to fast forward.
+  </Accordion>
+
+  <Accordion title="Previous button action">
+    Chooses what the hardware rewind or previous-track button does. Options match those for the forward button. Defaults to rewind.
+  </Accordion>
+</AccordionGroup>
+
+## Queue behavior
+
+<AccordionGroup>
+  <Accordion title="Add downloaded episode to queue">
+    When enabled, newly downloaded episodes are added to your queue automatically. Enabled by default.
+  </Accordion>
+
+  <Accordion title="Add new episode to">
+    Controls where newly downloaded or added episodes appear in the queue. Choose from:
+
+    - **Back** — appended to the end of the queue (default)
+    - **Front** — inserted at the top
+    - **After currently playing** — inserted immediately after the episode currently playing
+    - **Random** — inserted at a random position
+  </Accordion>
+
+  <Accordion title="Continuous playback">
+    When enabled, AntennaPod automatically starts the next episode in the queue when the current one finishes. Enabled by default. Disable it if you want playback to stop at the end of each episode.
+  </Accordion>
+
+  <Accordion title="Smart mark as played">
+    Marks an episode as played before it actually reaches the very end. Choose a threshold between disabled and 5 minutes from the end. The default is 30 seconds from the end.
+
+    This avoids the situation where AntennaPod never registers an episode as completed because of brief trailing silence or outro music. Episodes marked this way are treated identically to fully played episodes for queue advancement and auto-deletion purposes.
+  </Accordion>
+
+  <Accordion title="Skip removes episode from queue">
+    When enabled, tapping the skip-to-next button removes the current episode from the queue rather than just advancing to the next one. Enabled by default.
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  If you listen to multiple podcasts at different speeds, use per-feed speed overrides instead of constantly adjusting the global speed. Open any feed, tap the overflow menu, and select **Feed settings**.
+</Tip>

@@ -1,0 +1,110 @@
+---
+title: "Testing AntennaPod: unit tests and static analysis"
+description: "Run AntennaPod's JUnit unit tests, Espresso instrumentation tests, Checkstyle, Lint, and SpotBugs checks with Gradle before submitting a pull request."
+---
+
+AntennaPod uses a combination of unit tests (JUnit + Robolectric), instrumentation tests (Espresso on a real device or emulator), and static analysis tools (Checkstyle, Lint, SpotBugs). Running all of these locally before opening a pull request keeps CI green and speeds up review.
+
+## Unit tests
+
+Unit tests run on the JVM using JUnit 4 and Robolectric, so no device or emulator is required.
+
+<CodeGroup>
+
+```bash All modules
+./gradlew testPlayDebugUnitTest
+```
+
+```bash Specific module
+./gradlew :app:testPlayDebugUnitTest
+```
+
+</CodeGroup>
+
+To list all available module names, run:
+
+```bash
+./gradlew projects
+```
+
+<Note>
+  Robolectric calls `Application.onCreate()` for every test class, which is why `PodcastApp` guards the EventBus installation with a try/catch — the static default bus can only be installed once per JVM process.
+</Note>
+
+## Instrumentation tests
+
+Instrumentation tests use Espresso and run on an Android device or emulator. They test behavior that depends on the Android framework, such as database access, playback, and UI interactions.
+
+<Tabs>
+  <Tab title="Android Studio">
+    <Steps>
+      <Step title="Open Run Configurations">
+        In Android Studio, go to **Run → Edit Configurations…**
+      </Step>
+      <Step title="Add a new Android Instrumented Tests configuration">
+        Click **+**, select **Android Instrumented Tests**, and choose the module you want to test (for example `:app`).
+      </Step>
+      <Step title="Run the configuration">
+        Select the configuration in the toolbar and click **Run**. Android Studio will build, install, and execute the tests on the connected device or emulator.
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Command line">
+    <Steps>
+      <Step title="Start a device or emulator">
+        Launch an Android Virtual Device from the AVD Manager, or connect a physical device with USB debugging enabled.
+      </Step>
+      <Step title="Run the test script">
+        ```bash
+        sh .github/workflows/runTests.sh
+        ```
+        This script is the same one used in CI and covers the full instrumentation test suite.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Static analysis checks
+
+Three tools enforce code quality. Run them all with a single command:
+
+```bash
+./gradlew checkstyle lint spotbugsPlayDebug spotbugsDebug
+```
+
+<AccordionGroup>
+  <Accordion title="Checkstyle">
+    Enforces formatting and naming rules defined in `config/checkstyle/checkstyle.xml`. Key rules include 4-space indentation, no tabs, 120-character line limit, no wildcard imports, and required braces on all blocks.
+
+    Checkstyle scans `src/main/java`, `src/free/java`, and `src/play/java` in every module.
+  </Accordion>
+  <Accordion title="Lint">
+    Android Lint checks for API misuse, accessibility issues, and resource problems. The project runs with `warningsAsErrors true` and `abortOnError true`, so any unsilenced warning is a build failure.
+
+    A curated set of rules is disabled project-wide (see `app/build.gradle`); do not add new suppressions without a clear reason.
+  </Accordion>
+  <Accordion title="SpotBugs">
+    Analyses bytecode for likely bugs such as null dereferences, incorrect synchronization, and resource leaks. SpotBugs runs at `effort = max` and `reportLevel = medium`.
+
+    Exclusion rules are defined in `config/spotbugs/exclude.xml`. If SpotBugs reports a false positive, add an exclusion there rather than annotating individual methods.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  Only fix warnings in code you wrote. Fixing pre-existing warnings in unrelated files creates noisy diffs and complicates review.
+</Warning>
+
+## What to check before submitting a PR
+
+Use this checklist before marking your pull request as ready for review:
+
+| Check | Command |
+|-------|---------|
+| Project compiles without errors | `./gradlew :app:assembleDebug` |
+| Unit tests pass | `./gradlew testPlayDebugUnitTest` |
+| Checkstyle, Lint, and SpotBugs pass | `./gradlew checkstyle lint spotbugsPlayDebug spotbugsDebug` |
+| Instrumentation tests pass (if relevant) | `sh .github/workflows/runTests.sh` |
+
+<Tip>
+  If you are unsure which instrumentation tests cover your change, run the full suite. It is better to spend time locally than to discover a failure in CI after the PR is open.
+</Tip>

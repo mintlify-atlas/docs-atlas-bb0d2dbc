@@ -1,0 +1,135 @@
+---
+title: "Playback modules: base interface, service, and Chromecast"
+description: "How AntennaPod's :playback:base, :playback:service, and :playback:cast modules manage audio playback, sleep timers, and Android media sessions."
+---
+
+AntennaPod's playback stack is split across three Gradle modules under the `:playback` namespace. The separation keeps the Chromecast implementation out of the free build flavor, lets the UI layer interact with playback through a stable interface, and isolates the long-running background service from UI code. The UI layer communicates with the service through `PlaybackController`; the service in turn exposes a Media3 `MediaLibraryService` that integrates with the Android media system.
+
+## `:playback:base` — shared interfaces
+
+`:playback:base` defines the interfaces and status types that both the local and Cast implementations must satisfy. Nothing in this module starts threads or touches hardware.
+
+Key classes:
+
+- **`PlaybackServiceMediaPlayer`** — the abstract base class that local and Cast players both extend. Declares methods such as `play()`, `pause()`, `seekTo()`, and `setPlaybackSpeed()`.
+- **`PlayerStatus`** — an enum listing every possible playback state: `PLAYING`, `PAUSED`, `STOPPED`, `ERROR`, `PREPARING`, `PREPARED`, `SEEKING`, `INITIALIZED`, and `INDETERMINATE`.
+- **`MediaItemAdapter`** — converts a `Playable` model object into a Media3 `MediaItem` for the session.
+- **`RewindAfterPauseUtils`** — calculates how far to rewind when resuming after a long pause, based on user preference.
+
+<Note>
+Modules that need to read playback state (for example, to render a play/pause button) should depend on `:playback:base`, not on `:playback:service`. This avoids a transitive dependency on ExoPlayer in UI modules.
+</Note>
+
+## `:playback:service` — the main playback service
+
+`:playback:service` contains the long-running Android service that drives all local audio and video playback.
+
+### Key classes
+
+| Class | Role |
+|---|---|
+| `PlaybackService` | The `MediaBrowserServiceCompat`-based service entry point. Manages the service lifecycle, handles `Intent` actions for play/pause/skip, and owns the sleep timer. |
+| `Media3PlaybackService` | Wraps the Media3 `MediaLibraryService` and delegates to `LocalPSMP`. |
+| `LocalPSMP` | The local `PlaybackServiceMediaPlayer` implementation. Wraps ExoPlayer and translates its callbacks into `PlayerStatus` changes and EventBus events. |
+| `PlaybackController` | The client-side controller used by UI fragments and activities. Binds to `PlaybackService`, issues commands, and observes state changes without requiring the UI to hold a direct ExoPlayer reference. |
+| `PlaybackServiceTaskManager` | Schedules recurring background tasks while the service is running: widget updates, queue saves, and position persistence. |
+| `PlaybackServiceStateManager` | Persists the current playback position to `PlaybackPreferences` periodically and on pause/stop. |
+| `PlaybackServiceNotificationBuilder` | Builds the persistent foreground notification that satisfies Android's foreground service requirement and populates the lock-screen media controls. |
+
+### How playback works
+
+<Steps>
+  <Step title="Start intent">
+    A UI component (or a `MediaButton` broadcast) calls `PlaybackServiceStarter.start()`, which sends an `Intent` to `PlaybackService` with the target `Playable` and a requested action (`PLAY_ACTION`, `RESUME_ACTION`, etc.).
+  </Step>
+  <Step title="Service initialisation">
+    `PlaybackService.onStartCommand()` resolves the requested `Playable` from the intent extras, creates or reuses a `LocalPSMP` instance, and calls `initMediaPlayer()`.
+  </Step>
+  <Step title="ExoPlayer preparation">
+    `LocalPSMP` builds a Media3 `MediaItem` from the `Playable` via `MediaItemAdapter` and calls `ExoPlayer.setMediaItem()` followed by `prepare()`. `PlayerStatus` transitions to `PREPARING` then `PREPARED`.
+  </Step>
+  <Step title="Playback and state updates">
+    On `PREPARED`, `LocalPSMP` calls `play()`. ExoPlayer events are translated into `PlayerStatus` changes, which are broadcast as `PlayerStatusEvent` via EventBus so that every subscribed UI fragment updates simultaneously.
+  </Step>
+  <Step title="Position persistence">
+    `PlaybackServiceStateManager` writes the current position to `PlaybackPreferences` every few seconds and on every pause, so that the position survives process death.
+  </Step>
+  <Step title="Stop and release">
+    When playback ends or the user dismisses the notification, `PlaybackService` calls `LocalPSMP.shutdown()`, which releases the ExoPlayer instance and stops the foreground service.
+  </Step>
+</Steps>
+
+### Android media session integration
+
+`PlaybackService` creates and maintains a `MediaSession` (via Media3) that:
+
+- Populates lock-screen and notification media controls with artwork, title, and transport actions.
+- Responds to hardware media button events via `MediaButtonReceiver`.
+- Exposes a `MediaBrowser` tree to Android Auto and Wear OS through `MediaLibrarySessionCallback`.
+- Publishes session state to Wear OS through `WearMediaSession`.
+
+```java
+// Binding to PlaybackService from a Fragment
+PlaybackController controller = new PlaybackController(requireActivity()) {
+    @Override
+    public void onPlaybackServiceConnected() {
+        updateUiFromController();
+    }
+};
+controller.init();
+```
+
+### Sleep timer
+
+Two sleep timer implementations live in the `internal/` package:
+
+- **`ClockSleepTimer`** — counts down a fixed number of minutes.
+- **`EpisodeSleepTimer`** — stops playback at the end of the current episode.
+
+Both are managed by `PlaybackService` and selected based on `SleepTimerPreferences`.
+
+## `:playback:cast` — Chromecast support
+
+`:playback:cast` is compiled only in the `play` build flavor (the Google Play release). It provides a `PlaybackServiceMediaPlayer` implementation backed by the Google Cast SDK instead of ExoPlayer.
+
+<Info>
+The `play` flavor includes the Cast SDK dependency. The `free` flavor substitutes a no-op stub, so Chromecast code never enters the free APK.
+</Info>
+
+Key facts:
+
+- Implements `PlaybackServiceMediaPlayer` so that `PlaybackService` treats it identically to `LocalPSMP`.
+- Translates Cast session callbacks (`CastClient`, `RemoteMediaClient`) into `PlayerStatus` changes.
+- Handles session lifecycle: connects when a Cast device is chosen in the media route dialog, disconnects and hands back to `LocalPSMP` when casting stops.
+- Registered in `ClientConfigurator` only in the `play` flavor; the `free` flavor registers nothing and the cast menu item is hidden via `res/menu` overlays.
+
+```
+Playback class hierarchy
+─────────────────────────────────────────────
+PlaybackServiceMediaPlayer      (:playback:base)
+  ├── LocalPSMP                 (:playback:service)
+  └── CastPSMP                  (:playback:cast, play flavor only)
+```
+
+## Playback state flow
+
+```
+INDETERMINATE
+     │
+     ▼ initMediaPlayer()
+INITIALIZED
+     │
+     ▼ prepare()
+PREPARING ──► ERROR
+     │
+     ▼ onPrepared()
+PREPARED
+     │
+     ▼ play()
+PLAYING ◄──► PAUSED
+     │             │
+     ▼             ▼
+  STOPPED       SEEKING
+```
+
+`PlayerStatusEvent` is posted on every transition so that all registered EventBus subscribers (player fragment, widget, notification builder) receive the new state immediately on the main thread.

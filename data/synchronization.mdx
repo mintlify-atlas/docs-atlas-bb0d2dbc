@@ -1,0 +1,136 @@
+---
+title: "Sync podcast subscriptions and playback across devices"
+description: "Keep your podcast library and episode playback positions in sync across multiple Android devices using Gpodder.net or a self-hosted Nextcloud server."
+---
+
+AntennaPod can keep your podcast library synchronized across multiple devices. When sync is active, subscribing to or unsubscribing from a podcast on one device is reflected on all others, and episode playback positions are shared so you can pick up exactly where you left off regardless of which device you used last.
+
+## What sync covers
+
+<CardGroup cols={2}>
+  <Card title="Subscription changes" icon="rss">
+    Adding or removing a subscription is uploaded and applied to all connected devices.
+  </Card>
+  <Card title="Playback positions" icon="circle-play">
+    The position where you stopped playing an episode is synced so you can resume on another device.
+  </Card>
+  <Card title="Played status" icon="check">
+    Episodes marked as played are reflected across devices.
+  </Card>
+  <Card title="Episode actions" icon="list-check">
+    Download and delete actions are recorded and shared with the sync provider.
+  </Card>
+</CardGroup>
+
+<Note>
+  Sync does not transfer downloaded audio files. Each device downloads episodes independently.
+</Note>
+
+## Supported sync providers
+
+AntennaPod supports two sync backends, both of which implement the gpodder episode-action API.
+
+<Tabs>
+  <Tab title="Gpodder.net">
+    [Gpodder.net](https://gpodder.net) is a free, open-source podcast synchronization service. You register an account on the website, then connect AntennaPod on each device using your username and password.
+
+    **What you need:**
+    - A free account at [gpodder.net](https://gpodder.net)
+    - The same account credentials on every device you want to sync
+  </Tab>
+  <Tab title="Nextcloud (gpodder sync app)">
+    If you run a Nextcloud server, you can install the [gPodder Sync](https://apps.nextcloud.com/apps/gpoddersync) app and use it as a self-hosted sync backend. AntennaPod connects using your Nextcloud server URL, username, and password (or app password).
+
+    **What you need:**
+    - A Nextcloud instance with the gPodder Sync app installed
+    - Your Nextcloud server URL and credentials
+  </Tab>
+</Tabs>
+
+## Setting up Gpodder.net sync
+
+<Steps>
+  <Step title="Create a Gpodder.net account">
+    Go to [gpodder.net](https://gpodder.net) in a browser and register a free account. Note your username and password.
+  </Step>
+  <Step title="Open sync settings in AntennaPod">
+    In AntennaPod, go to **Settings > Synchronization** (or **Settings > Account** depending on your version).
+  </Step>
+  <Step title="Choose Gpodder.net">
+    Select **Gpodder.net** as the sync provider.
+  </Step>
+  <Step title="Enter your credentials">
+    Type your Gpodder.net username and password, then tap **Login**. AntennaPod authenticates with the server and registers this device.
+  </Step>
+  <Step title="Trigger the first sync">
+    After logging in, tap **Sync now** or wait for the automatic sync cycle to run. The first sync uploads all your current subscriptions and played episodes to the server.
+  </Step>
+</Steps>
+
+## Setting up Nextcloud sync
+
+<Steps>
+  <Step title="Install the gPodder Sync app on your Nextcloud server">
+    Log in to your Nextcloud server as an administrator, open the App store, and install the **gPodder Sync** app.
+  </Step>
+  <Step title="Open sync settings in AntennaPod">
+    In AntennaPod, go to **Settings > Synchronization**.
+  </Step>
+  <Step title="Choose Nextcloud">
+    Select **Nextcloud** as the sync provider.
+  </Step>
+  <Step title="Enter your server URL and credentials">
+    Enter the full URL of your Nextcloud instance (e.g., `https://cloud.example.com`), your Nextcloud username, and your password or an app password. Tap **Login**.
+  </Step>
+  <Step title="Trigger the first sync">
+    Tap **Sync now** to start the first sync cycle.
+  </Step>
+</Steps>
+
+<Tip>
+  If your Nextcloud account uses two-factor authentication, generate a dedicated app password in **Nextcloud > Settings > Security > Devices & sessions** and use that instead of your main password.
+</Tip>
+
+## How sync works
+
+AntennaPod queues local changes — subscription additions, removals, and episode play actions — in a local queue. When a sync run starts, these queued changes are uploaded to the server and remote changes from the server are downloaded and applied locally.
+
+The sync cycle follows this order:
+
+1. **Download subscription changes** — any feeds added or removed on other devices are applied locally.
+2. **Wait for feed refresh** — if new subscriptions were just added, AntennaPod refreshes them before processing episode actions, so it knows about the episodes.
+3. **Download episode actions** — play positions and played statuses from other devices are applied.
+4. **Upload local changes** — queued subscription and episode changes are sent to the server.
+
+### Conflict resolution
+
+When the same episode has been played on two devices and both have queued a play action, AntennaPod applies the **most recent timestamp** wins rule: the action with the later timestamp takes precedence. Local queued actions that would move the position backwards relative to the remote state are discarded.
+
+If an episode is marked as almost finished (within the configured smart-mark-as-played threshold), AntennaPod marks it as played and removes it from the queue.
+
+### First sync behavior
+
+The very first sync run after connecting an account uploads **all current subscriptions** and **all previously played episodes** to the server. This can take a moment if you have a large library. Subsequent sync runs only exchange changes since the last sync.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Sync fails with an authentication error">
+    Your stored credentials may have expired or changed. Go to **Settings > Synchronization**, log out, and log back in with your current username and password.
+  </Accordion>
+  <Accordion title="Subscriptions from another device are not appearing">
+    Make sure both devices are connected to the same account and that sync has run on the other device recently. Tap **Sync now** on each device. If the feed URL uses a redirect, AntennaPod follows permanent redirects and compares the final URL — if the other device stored a different variant of the URL, it may not match.
+  </Accordion>
+  <Accordion title="Playback positions are not being synced">
+    Episode actions (including play positions) are synced after subscriptions. If new subscriptions were added in the same sync run, AntennaPod waits for those feeds to refresh before uploading episode actions. Try running a second sync after the feeds have loaded.
+  </Accordion>
+  <Accordion title="A podcast I unsubscribed from keeps reappearing">
+    If you unsubscribed from a feed locally while it was also queued to be re-added by the sync queue, the two changes may conflict. Check **Settings > Synchronization** to see the sync status, and try unsubscribing again after a successful sync.
+  </Accordion>
+  <Accordion title="Sync error notifications keep appearing">
+    AntennaPod retries failed syncs automatically and shows a notification after repeated failures. Check your network connection and verify that the sync server is reachable. If the issue persists, log out and reconnect your account.
+  </Accordion>
+  <Accordion title="How do I disconnect from sync?">
+    Go to **Settings > Synchronization** and tap **Log out** or **Disable sync**. Your local data is not affected. AntennaPod stops queuing changes and no further syncs occur.
+  </Accordion>
+</AccordionGroup>

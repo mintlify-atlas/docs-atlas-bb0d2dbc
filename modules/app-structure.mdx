@@ -1,0 +1,171 @@
+---
+title: "AntennaPod app modules: structure, models, and UI layers"
+description: "Explore AntennaPod's Gradle module layout: the :app, :model, :event, :system, UI, and parser modules, their roles, and how they fit together as a system."
+---
+
+AntennaPod is built around a highly modularized Gradle architecture where every functional area lives in its own module. Modules are organized by domain — networking under `:net`, storage under `:storage`, UI under `:ui`, and so on — and each one maps directly to a subdirectory of the same name. For example, the module `:net:discovery` is located at `./net/discovery/`. This separation keeps compilation boundaries sharp, enforces dependency discipline, and makes it straightforward to work on one subsystem without touching others.
+
+<Info>
+Several functional areas follow a **service-interface / service split**: consumers depend only on the interface module, and the concrete implementation is registered at app startup inside `ClientConfigurator`. This means you can swap or stub an implementation without recompiling the rest of the app.
+</Info>
+
+## The `:app` module
+
+The `:app` module is the integration point for the entire application. It owns app-specific UI screens that are too small to warrant their own module and wires everything together at startup.
+
+Two classes do most of the heavy lifting:
+
+- **`PodcastApp`** — The `Application` subclass. Initialises global state: logging, crash reporting, RxJava error handlers, and the database.
+- **`ClientConfigurator`** — Called from `PodcastApp.onCreate()`. Registers the concrete service implementations (download, sync) against their interface singletons so that the rest of the app can call the interfaces without importing the implementations.
+
+```
+:app
+├── PodcastApp.java          # Application entry point
+├── ClientConfigurator.java  # Wires service implementations at startup
+└── PreferenceUpgrader.java  # Migrates SharedPreferences across versions
+```
+
+## The `:model` module
+
+`:model` contains the plain Java data classes that flow through every other module. There are no Android dependencies and no business logic here — only data.
+
+<CardGroup cols={2}>
+  <Card title="Feed" icon="rss">
+    Represents a podcast subscription. Holds the feed URL, title, image, and a list of `FeedItem` objects.
+  </Card>
+  <Card title="FeedItem" icon="list">
+    A single episode. References its parent `Feed` and an optional `FeedMedia` attachment.
+  </Card>
+  <Card title="FeedMedia" icon="play">
+    The audio or video file attached to a `FeedItem`. Tracks playback position, duration, and download state.
+  </Card>
+  <Card title="Chapter" icon="bookmark">
+    A named time range inside an episode. Chapters can come from the feed XML or embedded media tags.
+  </Card>
+</CardGroup>
+
+Additional classes in the `model/feed/` package include `FeedPreferences` (per-feed auto-download and notification settings), `FeedFilter`, `SortOrder`, and `FeedFunding`.
+
+The `model/playback/` package defines `Playable`, the interface implemented by both `FeedMedia` (local/downloaded episodes) and `RemoteMedia` (streaming URLs not tied to a feed item).
+
+<Note>
+Because `:model` has no Android dependencies, it can be unit-tested on the JVM without an emulator or device.
+</Note>
+
+## The `:event` module
+
+`:event` contains every EventBus event class used for cross-component communication throughout the app. All classes are plain Java POJOs. Subscribers register with GreenRobot EventBus using the `@Subscribe` annotation.
+
+<AccordionGroup>
+  <Accordion title="Playback events">
+    - `PlayerStatusEvent` — fired when the playback state changes (playing, paused, stopped, etc.)
+    - `PlayerErrorEvent` — fired when the media player encounters an unrecoverable error
+    - `StreamingConfirmationEvent` — asks the UI to confirm streaming over a metered connection
+  </Accordion>
+  <Accordion title="Feed and episode events">
+    - `FeedEvent` — a feed was added, updated, or removed
+    - `FeedItemEvent` — one or more feed items changed (read state, download status, queue membership)
+    - `FeedListUpdateEvent` — the full subscription list changed
+    - `FeedUpdateRunningEvent` — a background feed refresh started or finished
+    - `QueueEvent` — the playback queue was reordered, added to, or cleared
+    - `EpisodeDownloadEvent` — download progress or completion for one or more episodes
+    - `DownloadLogEvent` — the download log was updated
+  </Accordion>
+  <Accordion title="Other events">
+    - `MessageEvent` — general-purpose snackbar/toast message
+    - `StatisticsEvent` — statistics data changed
+    - `SyncServiceEvent` — sync started, finished, or failed
+    - `DiscoveryDefaultUpdateEvent` — the discovery backend's default suggestions changed
+  </Accordion>
+</AccordionGroup>
+
+```java
+// Subscribing to a playback status change
+@Subscribe(threadMode = ThreadMode.MAIN)
+public void onPlayerStatusEvent(PlayerStatusEvent event) {
+    updatePlayButton(event.getNewStatus());
+}
+```
+
+## The `:system` module
+
+`:system` provides standalone system-integration utilities with minimal inter-module dependencies.
+
+- **Crash reporting** — `CrashReportWriter` collects uncaught exceptions and writes them to a log file that users can share.
+- **Package utilities** — helpers to inspect installed packages and resolve intents.
+- **Thread utilities** — convenience wrappers for asserting or switching between the main thread and background threads.
+
+## UI modules
+
+All UI modules live under the `:ui` namespace. Most depend on `:ui:common` for shared base classes and `:ui:i18n` for string resources.
+
+| Module | Purpose |
+|---|---|
+| `:ui:common` | Base fragments, image loading helpers, and view utilities shared across multiple screens |
+| `:ui:episodes` | Common classes and adapters for displaying episode lists |
+| `:ui:i18n` | All translated string resources; the only place new user-visible strings should be added |
+| `:ui:discovery` | Screens for browsing and searching podcast directories |
+| `:ui:preferences` | Settings screen UI (the data layer lives in `:storage:preferences`) |
+| `:ui:statistics` | Listening statistics screens |
+| `:ui:chapters` | Chapter loading and merging logic for the now-playing screen |
+| `:ui:transcript` | Utilities for displaying synced transcripts alongside audio |
+| `:ui:notifications` | Notification channel IDs and notification icon resources |
+| `:ui:glide` | Glide configuration and custom model loaders for podcast artwork |
+| `:ui:echo` | The annual "Echo" rewind/year-in-review screen |
+| `:ui:widget` | Home screen widget |
+| `:ui:app-start-intent` | Intent helpers for starting main activities from modules that must not take a direct UI dependency |
+
+<Tip>
+When adding a user-visible string, always add it to `:ui:i18n`. Do not create new string resource files in other modules.
+</Tip>
+
+## Parser modules
+
+Three parser modules handle structured data ingestion from external sources.
+
+<CardGroup cols={3}>
+  <Card title=":parser:feed" icon="code">
+    SAX-based XML parser for RSS and Atom feeds. Produces `:model` objects (`Feed`, `FeedItem`, `Chapter`) directly from network responses.
+  </Card>
+  <Card title=":parser:media" icon="file-audio">
+    Low-level byte-level parser for ID3 (MP3) and Ogg Vorbis tags. Extracts embedded chapters and metadata such as description for locally stored files.
+  </Card>
+  <Card title=":parser:transcript" icon="captions">
+    Parses SRT, VTT, and JSON transcript formats into a common in-memory model consumed by `:ui:transcript`.
+  </Card>
+</CardGroup>
+
+## Module dependency overview
+
+The diagram below shows the high-level layering. Arrows point from dependent to dependency.
+
+```
+:app
+ ├── :playback:service
+ ├── :net:download:service
+ ├── :net:sync:service
+ ├── :storage:database
+ ├── :storage:preferences
+ ├── :storage:importexport
+ └── :ui:* (all UI modules)
+
+:playback:service
+ ├── :playback:base
+ └── :model
+
+:net:download:service
+ ├── :net:download:service-interface
+ ├── :net:common
+ └── :parser:feed
+
+:storage:database
+ └── :model
+
+:model          (no AntennaPod dependencies)
+:event          (no AntennaPod dependencies)
+:system         (no AntennaPod dependencies)
+```
+
+<Note>
+Interface modules (`:net:download:service-interface`, `:net:sync:service-interface`) sit between consumers and implementations. Consumers import the interface; `:app` wires in the real implementation via `ClientConfigurator`.
+</Note>

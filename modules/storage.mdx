@@ -1,0 +1,159 @@
+---
+title: "Storage modules: database, preferences, and import/export"
+description: "How AntennaPod persists podcast subscriptions, playback state, and user settings, and handles OPML and full database backups via its storage modules."
+---
+
+AntennaPod's persistence layer is divided into four modules under the `:storage` namespace. The database holds subscriptions and playback state; preferences holds user settings; import/export handles OPML and backup files; and a maintenance service periodically cleans up stale data. None of these modules own any UI — the settings screen lives in `:ui:preferences` and depends on `:storage:preferences` only as a data layer.
+
+<Info>
+AntennaPod's database uses raw SQLite through `PodDBAdapter`, not Room. This was a deliberate choice to maintain full control over query execution plans and to avoid the overhead of Room's annotation processing on a large schema.
+</Info>
+
+## `:storage:database`
+
+The main database module stores every podcast subscription, episode, and playback position.
+
+### Core classes
+
+<CardGroup cols={2}>
+  <Card title="PodDBAdapter" icon="database">
+    The single point of access to the SQLite database. Opens and upgrades the database via `DBUpgrader`, and exposes raw cursor-returning query methods for every table.
+  </Card>
+  <Card title="DBWriter" icon="pencil">
+    All write operations go through `DBWriter`, which executes them asynchronously on a dedicated single-threaded executor. Returns `Future` objects so callers can optionally wait for completion.
+  </Card>
+  <Card title="DBReader" icon="book-open">
+    Convenience methods for common read queries. Assembles complete model objects (e.g., a `Feed` with all its `FeedItem` children) from multiple cursor reads.
+  </Card>
+  <Card title="FeedDatabaseWriter" icon="rss">
+    Handles the complex logic of merging a freshly parsed `Feed` into the existing database: matching items by GUID, preserving playback state, and detecting duplicates.
+  </Card>
+</CardGroup>
+
+### The mapper pattern
+
+Raw SQLite cursors are converted into `:model` objects by dedicated cursor classes in the `mapper/` package. Each mapper class wraps a `Cursor` and exposes typed getter methods.
+
+| Mapper | Produces |
+|---|---|
+| `FeedCursor` | `Feed` |
+| `FeedItemCursor` | `FeedItem` |
+| `FeedMediaCursor` | `FeedMedia` |
+| `FeedPreferencesCursor` | `FeedPreferences` |
+| `ChapterCursor` | `Chapter` |
+| `DownloadResultCursor` | `DownloadResult` |
+
+```java
+// Reading a feed from the database
+PodDBAdapter adapter = PodDBAdapter.getInstance();
+adapter.open();
+Cursor cursor = adapter.getFeedCursor(feedId);
+FeedCursor feedCursor = new FeedCursor(cursor);
+Feed feed = feedCursor.extractFeedItem();
+adapter.close();
+```
+
+### Write operations
+
+All mutations go through `DBWriter`. The asynchronous design means UI code can call a write method without blocking the main thread, and can optionally observe the result via the returned `Future`.
+
+```java
+// Mark an episode as played (fire-and-forget)
+DBWriter.markItemPlayed(feedItem, FeedItem.PLAYED, false);
+
+// Mark as played and wait for completion
+Future<?> future = DBWriter.markItemPlayed(feedItem, FeedItem.PLAYED, false);
+future.get(); // blocks the calling thread
+```
+
+<Note>
+`DBWriter` uses a single-threaded executor, so all writes are serialised automatically. You do not need external locking around `DBWriter` calls.
+</Note>
+
+### Database upgrades
+
+`DBUpgrader` contains a sequential series of `onUpgrade()` migration steps, one per schema version. Each step is a raw SQL `ALTER TABLE` or data-migration statement. The current schema version is defined as a constant in `PodDBAdapter`.
+
+Other notable classes in this module:
+
+- **`ItemEnqueuePositionCalculator`** — determines where a newly added episode should be inserted in the play queue based on user preference (front, back, or after the current episode).
+- **`FeedItemPermutors`** — reusable comparators and sort implementations used when reordering queue or episode list views.
+- **`ReleaseScheduleGuesser`** — infers a podcast's release cadence from past episode dates, used to schedule feed refreshes at appropriate intervals.
+- **`NonSubscribedFeedsCleaner`** — removes feeds that were added temporarily (e.g., for preview) and never subscribed to.
+
+## `:storage:database-maintenance-service`
+
+This module runs periodic background maintenance tasks via WorkManager. The single worker class, `DatabaseMaintenanceWorker`, performs cleanup jobs such as removing old download log entries that are no longer needed.
+
+<Warning>
+Maintenance tasks are scheduled automatically. They should never be triggered directly by user actions or other modules. Import this module only from `:app`.
+</Warning>
+
+The worker is enqueued by `ClientConfigurator` as a `PeriodicWorkRequest` so it runs roughly once a day when the device is idle and charging. No configuration is required or exposed.
+
+## `:storage:importexport`
+
+The import/export module handles moving subscription and episode data in and out of AntennaPod.
+
+### Supported formats
+
+<AccordionGroup>
+  <Accordion title="OPML — feed list import/export">
+    OPML (Outline Processor Markup Language) is the standard interchange format for podcast subscriptions. AntennaPod implements both reading and writing:
+
+    - **`OpmlReader`** — SAX-based parser that reads an OPML file and produces a list of `OpmlElement` objects, each representing one feed URL.
+    - **`OpmlWriter`** — serialises the current subscription list to a well-formed OPML XML file.
+    - **`OpmlElement`** — plain data class holding a feed title, XML URL, and optional HTML URL.
+    - **`OpmlSymbols`** — constants for OPML XML element and attribute names.
+    - **`OpmlBackupAgent`** — Android `BackupAgent` that hooks into the system's auto-backup mechanism using OPML as the on-device backup format.
+  </Accordion>
+  <Accordion title="AntennaPod backup format — full data export">
+    The AntennaPod-specific format is a ZIP archive containing a full SQLite database dump. This preserves playback positions, queue order, download history, and per-feed preferences — everything that OPML omits.
+
+    - **`DatabaseExporter`** — copies the live SQLite file into a ZIP archive at a user-chosen location using Android's Storage Access Framework.
+    - **`AutomaticDatabaseExportWorker`** — WorkManager worker that performs a scheduled automatic export to the user's configured backup directory.
+  </Accordion>
+  <Accordion title="Favourites and HTML export">
+    - **`FavoritesWriter`** — exports the user's starred episodes as a simple text list.
+    - **`HtmlWriter`** — exports the subscription list as a human-readable HTML page with feed titles and artwork.
+  </Accordion>
+</AccordionGroup>
+
+### Import flow
+
+<Steps>
+  <Step title="File selection">
+    The user picks a file via the system file picker in `:ui:preferences`. The resulting `Uri` is passed to the appropriate reader.
+  </Step>
+  <Step title="Parsing">
+    For OPML, `OpmlReader` parses the file and returns a list of `OpmlElement` objects. For a full backup, the ZIP is extracted and the bundled database file is inspected.
+  </Step>
+  <Step title="Database write">
+    Each `OpmlElement` is converted into a `Feed` and written via `DBWriter.addFeedIfNotExists()`. The download service is then called to fetch each new feed.
+  </Step>
+</Steps>
+
+## `:storage:preferences`
+
+User settings are stored in Android `SharedPreferences` and accessed through static helper classes. This module contains the data access layer only; the settings UI lives in `:ui:preferences`.
+
+| Class | Covers |
+|---|---|
+| `UserPreferences` | All general app settings: theme, auto-download rules, feed update interval, queue behaviour, skip durations, playback speed, and more. |
+| `PlaybackPreferences` | The current playback state persisted across process restarts: last played media ID, position, speed, and volume. |
+| `SleepTimerPreferences` | Sleep timer duration and type (clock-based or episode-based). |
+| `SynchronizationCredentials` | Sync service hostname, username, and encrypted password. |
+| `SynchronizationSettings` | Which sync provider is active and when the last successful sync ran. |
+| `UsageStatistics` | Lightweight counters used by the "Echo" rewind feature (total listening time per feed, etc.). |
+
+```java
+// Reading a preference
+boolean autoDownload = UserPreferences.isEnableAutodownload();
+
+// Writing a preference
+UserPreferences.setPlaybackSpeed(1.5f);
+```
+
+<Tip>
+Because `UserPreferences` uses static methods, it can be called from any thread without binding or injection. The underlying `SharedPreferences` are opened lazily on first access and cached for subsequent calls.
+</Tip>
